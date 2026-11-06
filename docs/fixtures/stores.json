@@ -1,0 +1,16 @@
+{
+  "stores": [
+    {
+      "storeId": "shymkent-demo",
+      "name": "Шымкент · демо",
+      "timeZone": "Asia/Almaty",
+      "asOf": "2026-11-09T08:00:00+05:00"
+    },
+    {
+      "storeId": "almaty-demo",
+      "name": "Алматы · демо",
+      "timeZone": "Asia/Almaty",
+      "asOf": "2026-11-09T08:00:00+05:00"
+    }
+  ]
+}

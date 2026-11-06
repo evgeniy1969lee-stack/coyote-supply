@@ -1,0 +1,678 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Coyote Supply API v1 — JSON body definitions",
+  "$defs": {
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "ok"
+          ]
+        }
+      }
+    },
+    "store": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "storeId",
+        "name",
+        "timeZone",
+        "asOf"
+      ],
+      "properties": {
+        "storeId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timeZone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "stores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stores"
+      ],
+      "properties": {
+        "stores": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/store"
+          }
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orderDeadlineAt",
+        "arrivalDate",
+        "nextArrivalDate"
+      ],
+      "properties": {
+        "orderDeadlineAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "arrivalDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "nextArrivalDate": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "day": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "date",
+        "demandQty",
+        "incomingQty",
+        "closingQty",
+        "unmetQty",
+        "expiringQty"
+      ],
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "demandQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "incomingQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "closingQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "unmetQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expiringQty": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "stockout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "date",
+        "firstUnmetQty",
+        "quantity"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "stockout"
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "firstUnmetQty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "excess": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "date",
+        "quantity"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "excess"
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "expiry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "date",
+        "quantity",
+        "lotId"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "expiry"
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "lotId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        }
+      }
+    },
+    "insufficientData": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "reason"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "insufficient_data"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "missing_on_hand",
+            "stale_on_hand",
+            "insufficient_history",
+            "missing_recipe",
+            "missing_schedule",
+            "unknown_lot_expiry"
+          ]
+        }
+      }
+    },
+    "risk": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/stockout"
+        },
+        {
+          "$ref": "#/$defs/excess"
+        },
+        {
+          "$ref": "#/$defs/expiry"
+        },
+        {
+          "$ref": "#/$defs/insufficientData"
+        }
+      ]
+    },
+    "explanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "demandBeforeArrivalQty",
+        "shortageBeforeArrivalQty",
+        "uncoveredWindowDemandQty",
+        "safetyStockQty",
+        "endStockWithoutOrderQty",
+        "unroundedOrderQty"
+      ],
+      "properties": {
+        "demandBeforeArrivalQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "shortageBeforeArrivalQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "uncoveredWindowDemandQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "safetyStockQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "endStockWithoutOrderQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "unroundedOrderQty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "ingredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ingredientId",
+        "name",
+        "unit",
+        "onHandQty",
+        "daily",
+        "risks",
+        "recommendedQty",
+        "packQty",
+        "packPriceKzt",
+        "explanation",
+        "dataStatus"
+      ],
+      "properties": {
+        "ingredientId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unit": {
+          "enum": [
+            "ml",
+            "g",
+            "pcs"
+          ]
+        },
+        "onHandQty": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "daily": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/day"
+          }
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/risk"
+          }
+        },
+        "recommendedQty": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "packQty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "packPriceKzt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "explanation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/explanation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dataStatus": {
+          "enum": [
+            "ok",
+            "needs_review"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "dataStatus": {
+                "const": "ok"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "onHandQty": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "daily": {
+                "minItems": 1
+              },
+              "recommendedQty": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "explanation": {
+                "$ref": "#/$defs/explanation"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "recommendedQty": {
+                "type": "null"
+              },
+              "explanation": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "forecast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "storeId",
+        "forecastId",
+        "dataMode",
+        "asOf",
+        "schedule",
+        "ingredients"
+      ],
+      "properties": {
+        "storeId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "forecastId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "dataMode": {
+          "enum": [
+            "synthetic"
+          ]
+        },
+        "asOf": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "schedule": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schedule"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ingredients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ingredient"
+          }
+        }
+      }
+    },
+    "draftInputRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ingredientId",
+        "quantity"
+      ],
+      "properties": {
+        "ingredientId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "draftRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecastId",
+        "rows"
+      ],
+      "properties": {
+        "forecastId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/draftInputRow"
+          }
+        }
+      }
+    },
+    "draftRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ingredientId",
+        "quantity",
+        "packCount",
+        "packPriceKzt",
+        "lineTotalKzt"
+      ],
+      "properties": {
+        "ingredientId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "packCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "packPriceKzt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "lineTotalKzt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "draft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecastId",
+        "rows",
+        "totalKzt",
+        "savedAt"
+      ],
+      "properties": {
+        "forecastId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/draftRow"
+          },
+          "minItems": 1
+        },
+        "totalKzt": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "savedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "draftResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "storeId",
+        "draft"
+      ],
+      "properties": {
+        "storeId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "draft": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/draft"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "errorDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "reason"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "message",
+            "details"
+          ],
+          "properties": {
+            "code": {
+              "enum": [
+                "store_not_found",
+                "stale_forecast",
+                "invalid_draft"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "details": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/errorDetail"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

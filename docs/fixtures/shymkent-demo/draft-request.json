@@ -1,0 +1,9 @@
+{
+  "forecastId": "shymkent-demo-2026-11-09-v1",
+  "rows": [
+    {
+      "ingredientId": "milk",
+      "quantity": 30000
+    }
+  ]
+}

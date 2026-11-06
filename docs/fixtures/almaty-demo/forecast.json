@@ -1,0 +1,151 @@
+{
+  "storeId": "almaty-demo",
+  "forecastId": "almaty-demo-2026-11-09-v1",
+  "dataMode": "synthetic",
+  "asOf": "2026-11-09T08:00:00+05:00",
+  "schedule": {
+    "orderDeadlineAt": "2026-11-12T14:00:00+05:00",
+    "arrivalDate": "2026-11-13",
+    "nextArrivalDate": "2026-11-15"
+  },
+  "ingredients": [
+    {
+      "ingredientId": "milk",
+      "name": "Молоко",
+      "unit": "ml",
+      "onHandQty": 32000,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 9000,
+          "incomingQty": 0,
+          "closingQty": 23000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 8000,
+          "incomingQty": 0,
+          "closingQty": 15000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 8000,
+          "incomingQty": 0,
+          "closingQty": 7000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 5000,
+          "incomingQty": 0,
+          "closingQty": 2000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 5000,
+          "incomingQty": 0,
+          "closingQty": 0,
+          "unmetQty": 3000,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 5000,
+          "incomingQty": 0,
+          "closingQty": 0,
+          "unmetQty": 5000,
+          "expiringQty": 0
+        }
+      ],
+      "risks": [],
+      "recommendedQty": 12000,
+      "packQty": 6000,
+      "packPriceKzt": 4200,
+      "explanation": {
+        "demandBeforeArrivalQty": 30000,
+        "shortageBeforeArrivalQty": 0,
+        "uncoveredWindowDemandQty": 8000,
+        "safetyStockQty": 3000,
+        "endStockWithoutOrderQty": 0,
+        "unroundedOrderQty": 11000
+      },
+      "dataStatus": "ok"
+    },
+    {
+      "ingredientId": "cups",
+      "name": "Стаканы 300 мл",
+      "unit": "pcs",
+      "onHandQty": 220,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 20,
+          "incomingQty": 0,
+          "closingQty": 200,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 25,
+          "incomingQty": 0,
+          "closingQty": 175,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 20,
+          "incomingQty": 0,
+          "closingQty": 155,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 25,
+          "incomingQty": 0,
+          "closingQty": 130,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 30,
+          "incomingQty": 0,
+          "closingQty": 100,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 30,
+          "incomingQty": 0,
+          "closingQty": 70,
+          "unmetQty": 0,
+          "expiringQty": null
+        }
+      ],
+      "risks": [],
+      "recommendedQty": 0,
+      "packQty": 50,
+      "packPriceKzt": 1800,
+      "explanation": {
+        "demandBeforeArrivalQty": 90,
+        "shortageBeforeArrivalQty": 0,
+        "uncoveredWindowDemandQty": 0,
+        "safetyStockQty": 0,
+        "endStockWithoutOrderQty": 70,
+        "unroundedOrderQty": 0
+      },
+      "dataStatus": "ok"
+    }
+  ]
+}
