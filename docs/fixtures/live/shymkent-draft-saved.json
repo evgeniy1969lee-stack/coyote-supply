@@ -1,0 +1,17 @@
+{
+  "storeId": "shymkent-demo",
+  "draft": {
+    "forecastId": "shymkent-demo-2026-11-09-106c958b98583ad8153fa34e6ff5616ebc18a91d57027cdef1742b90a9fa88b1",
+    "rows": [
+      {
+        "ingredientId": "milk",
+        "quantity": 30000,
+        "packCount": 5,
+        "packPriceKzt": 4200,
+        "lineTotalKzt": 21000
+      }
+    ],
+    "totalKzt": 21000,
+    "savedAt": "2026-11-09T04:42:24.337686Z"
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "version": "demo-v1",
+  "seed": 43104,
+  "weeks": 10,
+  "catalog": {
+    "milk": {"name": "Молоко", "unit": "ml", "pack_qty": 6000, "pack_price_kzt": 4200},
+    "cream": {"name": "Сливки", "unit": "ml", "pack_qty": 1000, "pack_price_kzt": 1250},
+    "cups": {"name": "Стаканы 300 мл", "unit": "pcs", "pack_qty": 50, "pack_price_kzt": 1800, "track_expiry": false},
+    "oat-milk": {"name": "Овсяное молоко", "unit": "ml", "pack_qty": 6000, "pack_price_kzt": 6500},
+    "beans": {"name": "Кофейное зерно", "unit": "g", "pack_qty": 1000, "pack_price_kzt": 8600},
+    "vanilla": {"name": "Ванильный сироп", "unit": "ml", "pack_qty": 750, "pack_price_kzt": 3300},
+    "cocoa": {"name": "Какао", "unit": "g", "pack_qty": 500, "pack_price_kzt": 2700}
+  },
+  "recipes": [
+    {"sku": "latte-300", "valid_from": "2026-08-01", "valid_until": "2026-10-12", "usage": {"milk": 240, "beans": 18}},
+    {"sku": "latte-300", "valid_from": "2026-10-12", "usage": {"milk": 250, "beans": 18}},
+    {"sku": "cream-filter", "valid_from": "2026-08-01", "usage": {"cream": 50, "beans": 20}},
+    {"sku": "takeaway-300", "valid_from": "2026-08-01", "usage": {"cups": 1}},
+    {"sku": "oat-latte-300", "valid_from": "2026-08-01", "usage": {"oat-milk": 225, "beans": 18}},
+    {"sku": "americano-300", "valid_from": "2026-08-01", "usage": {"beans": 18}},
+    {"sku": "vanilla-shot", "valid_from": "2026-08-01", "usage": {"vanilla": 15}},
+    {"sku": "hot-cocoa", "valid_from": "2026-08-01", "usage": {"cocoa": 25}}
+  ],
+  "stores": [
+    {
+      "info": {"storeId": "shymkent-demo", "name": "Шымкент · демо", "timeZone": "Asia/Almaty", "asOf": "2026-11-09T08:00:00+05:00"},
+      "max_inventory_age_hours": 24,
+      "calendar": [
+        {"weekday": 3, "lead_days": 1, "deadline_time": "15:00"},
+        {"weekday": 6, "lead_days": 1, "deadline_time": "15:00"}
+      ],
+      "inventory": {
+        "milk": {"on_hand": 20000, "observed_at": "2026-11-09T07:30:00+05:00", "safety_stock": 5000, "max_stock": 18000, "lots": [
+          {"id": "milk-a-01", "quantity": 8000, "expires_on": "2026-11-12"},
+          {"id": "milk-a-02", "quantity": 12000, "expires_on": "2026-11-16"}
+        ]},
+        "cream": {"on_hand": 12000, "observed_at": "2026-11-09T07:30:00+05:00", "max_stock": 4000, "lots": [
+          {"id": "cream-a-01", "quantity": 12000, "expires_on": "2026-11-11"}
+        ]},
+        "cups": {"on_hand": 300, "observed_at": "2026-11-09T07:30:00+05:00", "max_stock": 100},
+        "oat-milk": {"on_hand": null, "observed_at": "2026-11-09T07:30:00+05:00", "safety_stock": 1000, "max_stock": 9000},
+        "beans": {"on_hand": 4800, "observed_at": "2026-11-09T07:30:00+05:00", "safety_stock": 800, "max_stock": 4000, "lots": [
+          {"id": "beans-a-01", "quantity": 4800, "expires_on": "2026-12-15"}
+        ]},
+        "vanilla": {"on_hand": 1500, "observed_at": "2026-11-09T07:30:00+05:00", "safety_stock": 150, "max_stock": 1800, "lots": [
+          {"id": "vanilla-a-01", "quantity": 1500, "expires_on": "2026-12-03"}
+        ]},
+        "cocoa": {"on_hand": 1100, "observed_at": "2026-11-09T07:30:00+05:00", "safety_stock": 200, "max_stock": 1200}
+      },
+      "deliveries": [
+        {"ingredient_id": "beans", "arrives_on": "2026-11-11", "lot": {"id": "beans-a-02", "quantity": 2000, "expires_on": "2026-12-29"}},
+        {"ingredient_id": "cocoa", "arrives_on": "2026-11-13", "lot": {"id": "cocoa-a-02", "quantity": 500, "expires_on": "2027-01-05"}},
+        {"ingredient_id": "milk", "arrives_on": "2026-11-15", "lot": {"id": "milk-a-03", "quantity": 12000, "expires_on": "2026-11-21"}}
+      ],
+      "weekday_sales": {
+        "latte-300": [48, 52, 48, 24, 24, 28, 29],
+        "cream-filter": [20, 20, 20, 0, 0, 0, 4],
+        "takeaway-300": [30, 30, 30, 30, 30, 30, 34],
+        "oat-latte-300": [12, 13, 14, 12, 14, 16, 17],
+        "americano-300": [21, 24, 20, 19, 22, 26, 25],
+        "vanilla-shot": [13, 11, 12, 9, 12, 11, 12],
+        "hot-cocoa": [6, 7, 8, 8, 11, 13, 12]
+      },
+      "missing_days": ["2026-09-16"],
+      "closed_days": ["2026-09-27"],
+      "stockout_days": ["2026-10-06"]
+    },
+    {
+      "info": {"storeId": "almaty-demo", "name": "Алматы · демо", "timeZone": "Asia/Almaty", "asOf": "2026-11-09T08:00:00+05:00"},
+      "max_inventory_age_hours": 24,
+      "calendar": [
+        {"weekday": 4, "lead_days": 1, "deadline_time": "14:00"},
+        {"weekday": 6, "lead_days": 2, "deadline_time": "16:00"}
+      ],
+      "inventory": {
+        "milk": {"on_hand": 32000, "observed_at": "2026-11-09T07:00:00+05:00", "safety_stock": 3000, "max_stock": 16000, "lots": [
+          {"id": "milk-b-01", "quantity": 32000, "expires_on": "2026-11-16"}
+        ]},
+        "cream": {"on_hand": 2500, "observed_at": "2026-11-09T07:00:00+05:00", "safety_stock": 400, "max_stock": 3000, "lots": [
+          {"id": "cream-b-01", "quantity": 2500, "expires_on": "2026-11-13"}
+        ]},
+        "cups": {"on_hand": 220, "observed_at": "2026-11-09T07:00:00+05:00", "max_stock": 100},
+        "oat-milk": {"on_hand": 8500, "observed_at": "2026-11-09T07:00:00+05:00", "safety_stock": 1200, "max_stock": 10000, "lots": [
+          {"id": "oat-b-01", "quantity": 8500, "expires_on": "2026-11-17"}
+        ]},
+        "beans": {"on_hand": 9000, "observed_at": "2026-11-09T07:00:00+05:00", "safety_stock": 1000, "max_stock": 4500, "lots": [
+          {"id": "beans-b-01", "quantity": 9000, "expires_on": "2026-12-17"}
+        ]},
+        "vanilla": {"on_hand": 2200, "observed_at": "2026-11-09T07:00:00+05:00", "safety_stock": 300, "max_stock": 1800, "lots": [
+          {"id": "vanilla-b-01", "quantity": 2200, "expires_on": "2026-11-19"}
+        ]},
+        "cocoa": {"on_hand": 950, "observed_at": "2026-11-07T18:00:00+05:00", "safety_stock": 200, "max_stock": 1100}
+      },
+      "deliveries": [
+        {"ingredient_id": "cream", "arrives_on": "2026-11-12", "lot": {"id": "cream-b-02", "quantity": 2000, "expires_on": "2026-11-17"}},
+        {"ingredient_id": "oat-milk", "arrives_on": "2026-11-14", "lot": {"id": "oat-b-02", "quantity": 6000, "expires_on": "2026-11-20"}}
+      ],
+      "weekday_sales": {
+        "latte-300": [36, 32, 32, 20, 20, 20, 28],
+        "cream-filter": [6, 8, 8, 10, 11, 12, 10],
+        "takeaway-300": [20, 25, 20, 25, 30, 30, 30],
+        "oat-latte-300": [17, 16, 19, 20, 21, 24, 21],
+        "americano-300": [19, 21, 18, 22, 21, 24, 23],
+        "vanilla-shot": [10, 10, 13, 14, 14, 16, 13],
+        "hot-cocoa": [8, 9, 10, 11, 12, 14, 13]
+      },
+      "missing_days": ["2026-10-04"],
+      "closed_days": ["2026-09-13"],
+      "stockout_days": ["2026-09-24"]
+    }
+  ]
+}

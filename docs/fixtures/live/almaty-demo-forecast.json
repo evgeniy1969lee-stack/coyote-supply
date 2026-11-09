@@ -1,0 +1,459 @@
+{
+  "storeId": "almaty-demo",
+  "forecastId": "almaty-demo-2026-11-09-00a85a70bbbf914eeed8d112c6b21b9de0d27741bf96efdc5dee22090601e71c",
+  "dataMode": "synthetic",
+  "asOf": "2026-11-09T08:00:00+05:00",
+  "schedule": {
+    "orderDeadlineAt": "2026-11-12T14:00:00+05:00",
+    "arrivalDate": "2026-11-13",
+    "nextArrivalDate": "2026-11-15"
+  },
+  "ingredients": [
+    {
+      "ingredientId": "milk",
+      "name": "Молоко",
+      "unit": "ml",
+      "onHandQty": 32000,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 9000,
+          "incomingQty": 0,
+          "closingQty": 23000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 8000,
+          "incomingQty": 0,
+          "closingQty": 15000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 8000,
+          "incomingQty": 0,
+          "closingQty": 7000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 5000,
+          "incomingQty": 0,
+          "closingQty": 2000,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 5000,
+          "incomingQty": 0,
+          "closingQty": 0,
+          "unmetQty": 3000,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 5000,
+          "incomingQty": 0,
+          "closingQty": 0,
+          "unmetQty": 5000,
+          "expiringQty": 0
+        }
+      ],
+      "risks": [],
+      "recommendedQty": 12000,
+      "packQty": 6000,
+      "packPriceKzt": 4200,
+      "explanation": {
+        "demandBeforeArrivalQty": 30000,
+        "shortageBeforeArrivalQty": 0,
+        "uncoveredWindowDemandQty": 8000,
+        "safetyStockQty": 3000,
+        "endStockWithoutOrderQty": 0,
+        "unroundedOrderQty": 11000
+      },
+      "dataStatus": "ok"
+    },
+    {
+      "ingredientId": "cream",
+      "name": "Сливки",
+      "unit": "ml",
+      "onHandQty": 2500,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 300,
+          "incomingQty": 0,
+          "closingQty": 2200,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 400,
+          "incomingQty": 0,
+          "closingQty": 1800,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 400,
+          "incomingQty": 0,
+          "closingQty": 1400,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 500,
+          "incomingQty": 2000,
+          "closingQty": 2900,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 550,
+          "incomingQty": 0,
+          "closingQty": 2000,
+          "unmetQty": 0,
+          "expiringQty": 350
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 600,
+          "incomingQty": 0,
+          "closingQty": 1400,
+          "unmetQty": 0,
+          "expiringQty": 0
+        }
+      ],
+      "risks": [
+        {
+          "type": "expiry",
+          "date": "2026-11-13",
+          "quantity": 350,
+          "lotId": "cream-b-01"
+        }
+      ],
+      "recommendedQty": 0,
+      "packQty": 1000,
+      "packPriceKzt": 1250,
+      "explanation": {
+        "demandBeforeArrivalQty": 1600,
+        "shortageBeforeArrivalQty": 0,
+        "uncoveredWindowDemandQty": 0,
+        "safetyStockQty": 400,
+        "endStockWithoutOrderQty": 1400,
+        "unroundedOrderQty": 0
+      },
+      "dataStatus": "ok"
+    },
+    {
+      "ingredientId": "cups",
+      "name": "Стаканы 300 мл",
+      "unit": "pcs",
+      "onHandQty": 220,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 20,
+          "incomingQty": 0,
+          "closingQty": 200,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 25,
+          "incomingQty": 0,
+          "closingQty": 175,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 20,
+          "incomingQty": 0,
+          "closingQty": 155,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 25,
+          "incomingQty": 0,
+          "closingQty": 130,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 30,
+          "incomingQty": 0,
+          "closingQty": 100,
+          "unmetQty": 0,
+          "expiringQty": null
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 30,
+          "incomingQty": 0,
+          "closingQty": 70,
+          "unmetQty": 0,
+          "expiringQty": null
+        }
+      ],
+      "risks": [],
+      "recommendedQty": 0,
+      "packQty": 50,
+      "packPriceKzt": 1800,
+      "explanation": {
+        "demandBeforeArrivalQty": 90,
+        "shortageBeforeArrivalQty": 0,
+        "uncoveredWindowDemandQty": 0,
+        "safetyStockQty": 0,
+        "endStockWithoutOrderQty": 70,
+        "unroundedOrderQty": 0
+      },
+      "dataStatus": "ok"
+    },
+    {
+      "ingredientId": "oat-milk",
+      "name": "Овсяное молоко",
+      "unit": "ml",
+      "onHandQty": 8500,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 3825,
+          "incomingQty": 0,
+          "closingQty": 4675,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 3600,
+          "incomingQty": 0,
+          "closingQty": 1075,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 4275,
+          "incomingQty": 0,
+          "closingQty": 0,
+          "unmetQty": 3200,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 4500,
+          "incomingQty": 0,
+          "closingQty": 0,
+          "unmetQty": 4500,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 4725,
+          "incomingQty": 0,
+          "closingQty": 0,
+          "unmetQty": 4725,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 5400,
+          "incomingQty": 6000,
+          "closingQty": 600,
+          "unmetQty": 0,
+          "expiringQty": 0
+        }
+      ],
+      "risks": [
+        {
+          "type": "stockout",
+          "date": "2026-11-11",
+          "firstUnmetQty": 3200,
+          "quantity": 7700
+        }
+      ],
+      "recommendedQty": 6000,
+      "packQty": 6000,
+      "packPriceKzt": 6500,
+      "explanation": {
+        "demandBeforeArrivalQty": 16200,
+        "shortageBeforeArrivalQty": 7700,
+        "uncoveredWindowDemandQty": 4725,
+        "safetyStockQty": 1200,
+        "endStockWithoutOrderQty": 600,
+        "unroundedOrderQty": 5325
+      },
+      "dataStatus": "ok"
+    },
+    {
+      "ingredientId": "beans",
+      "name": "Кофейное зерно",
+      "unit": "g",
+      "onHandQty": 9000,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 1416,
+          "incomingQty": 0,
+          "closingQty": 7584,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 1402,
+          "incomingQty": 0,
+          "closingQty": 6182,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 1402,
+          "incomingQty": 0,
+          "closingQty": 4780,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 1316,
+          "incomingQty": 0,
+          "closingQty": 3464,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 1336,
+          "incomingQty": 0,
+          "closingQty": 2128,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 1464,
+          "incomingQty": 0,
+          "closingQty": 664,
+          "unmetQty": 0,
+          "expiringQty": 0
+        }
+      ],
+      "risks": [],
+      "recommendedQty": 1000,
+      "packQty": 1000,
+      "packPriceKzt": 8600,
+      "explanation": {
+        "demandBeforeArrivalQty": 5536,
+        "shortageBeforeArrivalQty": 0,
+        "uncoveredWindowDemandQty": 0,
+        "safetyStockQty": 1000,
+        "endStockWithoutOrderQty": 664,
+        "unroundedOrderQty": 336
+      },
+      "dataStatus": "ok"
+    },
+    {
+      "ingredientId": "vanilla",
+      "name": "Ванильный сироп",
+      "unit": "ml",
+      "onHandQty": 2200,
+      "daily": [
+        {
+          "date": "2026-11-09",
+          "demandQty": 150,
+          "incomingQty": 0,
+          "closingQty": 2050,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-10",
+          "demandQty": 150,
+          "incomingQty": 0,
+          "closingQty": 1900,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-11",
+          "demandQty": 195,
+          "incomingQty": 0,
+          "closingQty": 1705,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-12",
+          "demandQty": 210,
+          "incomingQty": 0,
+          "closingQty": 1495,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-13",
+          "demandQty": 210,
+          "incomingQty": 0,
+          "closingQty": 1285,
+          "unmetQty": 0,
+          "expiringQty": 0
+        },
+        {
+          "date": "2026-11-14",
+          "demandQty": 240,
+          "incomingQty": 0,
+          "closingQty": 1045,
+          "unmetQty": 0,
+          "expiringQty": 0
+        }
+      ],
+      "risks": [],
+      "recommendedQty": 0,
+      "packQty": 750,
+      "packPriceKzt": 3300,
+      "explanation": {
+        "demandBeforeArrivalQty": 705,
+        "shortageBeforeArrivalQty": 0,
+        "uncoveredWindowDemandQty": 0,
+        "safetyStockQty": 300,
+        "endStockWithoutOrderQty": 1045,
+        "unroundedOrderQty": 0
+      },
+      "dataStatus": "ok"
+    },
+    {
+      "ingredientId": "cocoa",
+      "name": "Какао",
+      "unit": "g",
+      "onHandQty": 950,
+      "daily": [],
+      "risks": [
+        {
+          "type": "insufficient_data",
+          "reason": "stale_on_hand"
+        }
+      ],
+      "recommendedQty": null,
+      "packQty": 500,
+      "packPriceKzt": 2700,
+      "explanation": null,
+      "dataStatus": "needs_review"
+    }
+  ]
+}
