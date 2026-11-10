@@ -105,7 +105,7 @@ export function ShiftDashboard({ shift, onStockChange, onRefresh, onSupply, onAs
           <img key={`${guardian.state}-${recent?.eventId ?? ''}`} src="/coyote-barista.webp" alt="" width={720} height={670} />
         </div>
         <div className="guardian-copy">
-          <div className="guardian-kicker"><Sparkles size={17} aria-hidden="true" /> Shift Guardian</div>
+          <div className="guardian-kicker"><Sparkles size={17} aria-hidden="true" /> Контроль запасов</div>
           <h2 id="guardian-title">{guardian.title}</h2>
           <p aria-live="polite">{guardian.message}</p>
           <div className="guardian-actions">

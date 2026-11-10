@@ -65,7 +65,10 @@ def test_loss_invalidates_old_draft_version_and_keeps_saved_rows(tmp_path):
         draft_request = {"forecastId": before["forecast"]["forecastId"], "rows": rows}
         saved = client.put(f"{SHYMKENT}/draft", json=draft_request).json()["draft"]
         assert saved["totalKzt"] == 21_000
-        assert client.get(f"{SHYMKENT}/shift").json()["guardian"]["state"] == "watch"
+        saved_shift = client.get(f"{SHYMKENT}/shift").json()
+        assert saved_shift["guardian"]["state"] == "alert"
+        assert saved_shift["guardian"]["title"] == "Риск нехватки до поставки"
+        assert any(action["id"] == "order" and action["priority"] == "done" for action in saved_shift["actions"])
 
         after = client.post(f"{SHYMKENT}/shift/losses", json=loss_request(before)).json()
         assert after["draft"] == saved

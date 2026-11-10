@@ -246,14 +246,14 @@ def summarize_shift(snapshot: ShiftSnapshot, draft: Draft | None) -> ShiftOvervi
 
     if stockout:
         item, risk = stockout
-        warning = f"{item.name} · ожидаем нехватку с {risk.date:%d.%m}."
-        detail = f"До поставки не хватит {describe_quantity(risk.quantity, item.unit)}."
+        warning = f"{item.name} · риск нехватки с {risk.date:%d.%m}."
+        detail = f"До поставки может не хватить {describe_quantity(risk.quantity, item.unit)}."
         actions.append(ShiftAction(id="stockout", priority="urgent", title="Подготовьтесь к нехватке", detail=f"{warning} {detail}"))
         available = describe_quantity(item.onHandQty, item.unit) if item.onHandQty is not None else "неизвестно"
-        message = f"{warning} Сейчас на складе {available}. {detail}"
+        message = f"{warning} На складе {available}. {detail}"
         guardian = Guardian(
-            state="watch" if ready else "alert",
-            title="Черновик готов, следим за запасом" if ready else "Нужна реакция на дефицит",
+            state="alert",
+            title="Риск нехватки до поставки",
             message=message,
         )
     elif needs_review:
