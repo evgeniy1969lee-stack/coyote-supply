@@ -83,7 +83,7 @@ def explain(endpoint: str, question: str, answer: CopilotAnswer) -> CopilotAnswe
         return answer
     if re.search(r"\b(?:один|дв[ае]|три|четыр\w*|пят\w*|шест\w*|семь|восемь|девят\w*|десят\w*|двадц\w*|тридц\w*|сто|тысяч\w*)\b", note, re.I):
         return answer
-    return answer.model_copy(update={"explanation": note, "model": MODEL})
+    return answer.model_copy(update={"explanation": note, "model": "assistant"})
 
 
 def respond(dataset: Dataset, shift: ShiftOverview, question: str) -> CopilotAnswer:
@@ -127,7 +127,7 @@ def respond(dataset: Dataset, shift: ShiftOverview, question: str) -> CopilotAns
         if route in candidates:
             answer = answer_question(dataset, shift, candidates[route][1])
             if answer.kind == route.split(":")[0]:
-                return explain(endpoint, question, answer.model_copy(update={"model": MODEL}))
+                return explain(endpoint, question, answer.model_copy(update={"model": "assistant"}))
     except _MODEL_ERRORS:
         _logger.warning("Copilot model response unavailable; using direct lookup")
     finally:

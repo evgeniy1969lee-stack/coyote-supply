@@ -17,7 +17,7 @@ class CopilotAnswer(ContractModel):
     kind: Literal["recipe", "stock", "purchase", "shortage", "shift", "loss", "unsupported"]
     answer: str
     source: str
-    model: str | None = None
+    model: Literal["assistant"] | None = None
     explanation: str | None = None
 
 
