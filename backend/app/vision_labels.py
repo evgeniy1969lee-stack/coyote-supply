@@ -11,6 +11,7 @@ from threading import BoundedSemaphore
 
 from PIL import Image, ImageOps
 from rapidocr_onnxruntime import RapidOCR
+from rapidocr_onnxruntime.utils.infer_engine import ONNXRuntimeError
 
 from .vision import VisionUnavailable, decode_jpeg
 
@@ -65,7 +66,7 @@ def classify_label(text: str) -> str | None:
 
 @lru_cache(maxsize=1)
 def _detector() -> RapidOCR:
-    return RapidOCR(intra_op_num_threads=2, inter_op_num_threads=1)
+    return RapidOCR(intra_op_num_threads=1, inter_op_num_threads=1, max_side_len=960, det_limit_type="max")
 
 
 def _multilingual_text(image: Image.Image) -> str:
@@ -93,7 +94,10 @@ def read_label(frame: bytes) -> str:
     if not _slot.acquire(blocking=False):
         raise VisionUnavailable
     try:
-        regions, _ = _detector()(frame)
+        try:
+            regions, _ = _detector()(frame)
+        except (ONNXRuntimeError, MemoryError):
+            regions = []
         text = " ".join(value for _, value, score in (regions or []) if score >= 0.80)
         if classify_label(text):
             return text

@@ -1,5 +1,7 @@
 import pytest
+from rapidocr_onnxruntime.utils.infer_engine import ONNXRuntimeError
 
+from backend.app import vision_labels
 from backend.app.vision_labels import classify_label
 
 
@@ -36,3 +38,12 @@ from backend.app.vision_labels import classify_label
 ])
 def test_label_classification_requires_product_evidence(text, expected):
     assert classify_label(text) == expected
+
+
+def test_scene_ocr_resource_failure_uses_multilingual_fallback(monkeypatch):
+    monkeypatch.setattr(vision_labels, "decode_jpeg", lambda *args, **kwargs: object())
+    def exhausted(frame):
+        raise ONNXRuntimeError("test allocation failure")
+    monkeypatch.setattr(vision_labels, "_detector", lambda: exhausted)
+    monkeypatch.setattr(vision_labels, "_multilingual_text", lambda image: "МОЛОКО")
+    assert vision_labels.analyze_label(b"test validated frame") == "milk"
