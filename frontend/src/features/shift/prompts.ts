@@ -5,4 +5,5 @@ export const prompts = [
   { question: 'Сколько молока осталось?', icon: Package },
   { question: 'Что делать первым?', icon: ClipboardList },
   { question: 'Что изменилось после списания?', icon: CircleAlert },
+  { question: 'Сколько молока заказать?', icon: Package },
 ]

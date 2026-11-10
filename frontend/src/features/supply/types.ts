@@ -61,7 +61,7 @@ export type IngredientForecast = {
 export type Forecast = {
   storeId: string
   forecastId: string
-  dataMode: 'synthetic'
+  dataMode: 'synthetic' | 'imported'
   asOf: string
   schedule: {
     orderDeadlineAt: string

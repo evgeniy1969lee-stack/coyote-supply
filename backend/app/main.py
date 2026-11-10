@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .copilot import CopilotAnswer, CopilotQuestion, answer_question
 from .data import Dataset
-from .demo_data import load_demo
+from .demo_data import load_dataset
 from .drafts import DraftStore, price_draft
 from .schemas import (
     DraftRequest, DraftResponse, ErrorBody, ErrorDetail, ErrorResponse, Forecast, Health, Stores,
@@ -50,7 +50,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         nonlocal shift
-        snapshot = dataset if dataset is not None else load_demo()
+        snapshot = dataset if dataset is not None else load_dataset(os.getenv("COYOTE_DATASET_PATH"))
         database.initialize()
         shift = ShiftService(snapshot)
         with database.transaction(write=True) as connection:
@@ -58,7 +58,7 @@ def create_app(
         stores.stores = [store.info for store in snapshot.stores]
         yield
 
-    app = FastAPI(title="Coyote OS", version="1.1.0", lifespan=lifespan)
+    app = FastAPI(title="Coyote", version="1.1.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=LOCAL_ORIGINS,

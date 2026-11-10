@@ -114,7 +114,7 @@ def build_forecast(dataset: Dataset, store: StoreData) -> Forecast:
         deliveries[delivery.ingredient_id].append(delivery)
     return Forecast(
         storeId=store.info.storeId, forecastId=f"{store.info.storeId}-{store.as_of_date}-{digest}",
-        asOf=store.info.asOf, schedule=schedule,
+        asOf=store.info.asOf, schedule=schedule, dataMode=dataset.data_mode,
         ingredients=[
             recommend_ingredient(store, key, dataset.catalog[key], history[key], deliveries[key], schedule)
             for key in store.inventory

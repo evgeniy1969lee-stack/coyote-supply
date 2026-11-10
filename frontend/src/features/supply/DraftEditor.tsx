@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/sheet'
 import { ApiError, requestError, saveDraft } from '@/features/shift/api'
 
-import { formatDate, formatKzt, formatQuantity } from './format'
+import { formatDate, formatKzt, formatQuantity, formatStoreName } from './format'
 import { OrderCalculation } from './OrderCalculation'
 import type { Draft, Forecast, IngredientForecast, Store } from './types'
 
@@ -149,7 +149,7 @@ export function DraftEditor({ store, forecast, savedDraft, onSaved, onRefresh, c
           <div className="space-y-1">
             <SheetTitle className="text-2xl leading-tight font-extrabold tracking-tight">Черновик закупки</SheetTitle>
             <SheetDescription>
-              {store.name}{forecast.schedule && ` · поставка ${formatDate(forecast.schedule.arrivalDate)}`}
+              {formatStoreName(store.name)}{forecast.schedule && ` · поставка ${formatDate(forecast.schedule.arrivalDate)}`}
             </SheetDescription>
           </div>
           <SheetClose asChild><Button variant="outline" className="h-11">Закрыть</Button></SheetClose>

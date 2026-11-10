@@ -5,6 +5,7 @@ import { formatDate, formatQuantity } from '@/features/supply/format'
 import type { Risk, Unit } from '@/features/supply/types'
 import { prompts } from './prompts'
 import { LossSheet } from './LossSheet'
+import { buttonPointerMotion, heroPointerMotion } from './pointerMotion'
 import type { LossEvent, ShiftOverview } from './api'
 
 const guardianLabels = { alert: 'Требует внимания', watch: 'Под наблюдением', calm: 'По плану' }
@@ -86,7 +87,7 @@ export function ShiftDashboard({ shift, onLoss, onRefresh, onSupply, onAsk, draf
 
   return (
     <>
-      <section className="guardian-hero" data-state={guardian.state} aria-labelledby="guardian-title">
+      <section className="guardian-hero" {...heroPointerMotion} data-state={guardian.state} aria-labelledby="guardian-title">
         <div className="guardian-art" aria-hidden="true">
           <div className="guardian-orbit" />
           <img key={`${guardian.state}-${recent?.eventId ?? ''}`} src="/coyote-barista.webp" alt="" width={720} height={670} />
@@ -97,8 +98,8 @@ export function ShiftDashboard({ shift, onLoss, onRefresh, onSupply, onAsk, draf
           <p aria-live="polite">{guardian.message}</p>
           <div className="guardian-actions">
             <LossSheet shift={shift} onChange={onLoss} onRefresh={onRefresh}>
-              <Button className="guardian-primary h-11" disabled={!hasStock}>
-                <Droplets aria-hidden="true" /> Записать потерю
+              <Button {...buttonPointerMotion} className="guardian-primary h-11 px-3" disabled={!hasStock}>
+                <span className="pointer-button-label"><Droplets aria-hidden="true" /> Записать потерю</span>
               </Button>
             </LossSheet>
             {draftAction}

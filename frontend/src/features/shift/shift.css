@@ -15,7 +15,6 @@
 .os-brand { display: flex; align-items: center; gap: 11px; }
 .os-brand img { flex: none; }
 .os-brand strong { font-size: 1.2rem; font-weight: 800; letter-spacing: -.035em; }
-.os-brand strong span { color: var(--primary); }
 .os-brand p, .action-heading p, .copilot-heading p { color: var(--muted-foreground); font-size: .79rem; }
 
 .os-nav {
@@ -46,7 +45,9 @@
 .os-nav button[aria-current="page"] { color: var(--primary); background: var(--card); box-shadow: 0 1px 2px #35201d17; }
 .os-nav button:hover:not([aria-current="page"]) { color: var(--foreground); background: #fffcf899; }
 
-.os-demo, .os-shift-date, .os-store {
+.pointer-button-label { display: inline-flex; align-items: center; gap: inherit; pointer-events: none; }
+
+.os-team, .os-shift-date, .os-store {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -55,7 +56,7 @@
   font-weight: 700;
 }
 
-.os-demo { justify-self: end; color: #3b6154; }
+.os-team { justify-self: end; color: var(--primary); letter-spacing: .025em; }
 .os-workspace { display: grid; gap: 22px; padding-block: clamp(22px, 4vw, 42px); }
 .os-page-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 22px; }
 .os-page-heading .page-title { font-size: clamp(2.3rem, 5vw, 3.65rem); }
@@ -234,5 +235,12 @@
   @keyframes guardian-enter {
     from { opacity: .55; transform: translateY(9px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .pointer-button-label, .guardian-art, .guardian-kicker, #guardian-title {
+    translate: var(--cursor-translate, 0 0);
+    transition: translate 150ms cubic-bezier(0.215, 0.61, 0.355, 1);
   }
 }

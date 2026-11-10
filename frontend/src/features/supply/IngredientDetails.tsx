@@ -6,6 +6,7 @@ import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTi
 
 import { formatCoverage, formatDate, formatKzt, formatQuantity } from './format'
 import { OrderCalculation } from './OrderCalculation'
+import { IngredientPhoto } from './IngredientPhoto'
 import type { Forecast, IngredientForecast } from './types'
 
 export function IngredientDetails({ item, schedule, risks }: {
@@ -26,9 +27,12 @@ export function IngredientDetails({ item, schedule, risks }: {
       </SheetTrigger>
       <SheetContent showCloseButton={false} className="w-full gap-0 overflow-y-auto bg-card sm:max-w-[480px]">
         <SheetHeader className="sheet-masthead flex-row items-start justify-between gap-3 border-b border-border p-4 sm:p-6">
-          <div className="min-w-0 space-y-1">
-            <SheetTitle className="text-2xl font-extrabold tracking-tight wrap-break-word">{name}</SheetTitle>
-            <SheetDescription>Прогноз и расчёт закупки</SheetDescription>
+          <div className="flex min-w-0 items-center gap-3">
+            <IngredientPhoto ingredientId={item.ingredientId} />
+            <div className="min-w-0 space-y-1">
+              <SheetTitle className="text-2xl font-extrabold tracking-tight wrap-break-word">{name}</SheetTitle>
+              <SheetDescription>Прогноз и расчёт закупки</SheetDescription>
+            </div>
           </div>
           <SheetClose asChild><Button variant="outline" className="h-11">Закрыть</Button></SheetClose>
         </SheetHeader>

@@ -85,3 +85,9 @@ def load_demo(path: Path = DEMO_PATH) -> Dataset:
         version=config.version, catalog=config.catalog, recipes=config.recipes,
         stores=[generate_history(store, config.weeks, config.seed) for store in config.stores],
     )
+
+
+def load_dataset(path: str | None = None) -> Dataset:
+    if path is None:
+        return load_demo()
+    return Dataset.model_validate_json(Path(path).read_bytes()).model_copy(update={"data_mode": "imported"})

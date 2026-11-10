@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi.testclient import TestClient
+from backend.app.demo_data import load_demo
 
 from backend.app.main import create_app
 
@@ -122,6 +123,13 @@ def test_copilot_uses_current_recipe_stock_and_shift(tmp_path):
         assert "20 л" in ask("Сколько молока осталось?")["answer"]
         assert ask("Что делать первым?")["kind"] == "shift"
         assert ask("Какой курс доллара?")["kind"] == "unsupported"
+        order = ask("Сколько молока заказать?")
+        assert order["kind"] == "purchase"
+        assert "24 л" in order["answer"] and "4 уп." in order["answer"]
+        assert "19 л" in order["answer"] and "5 л" in order["answer"]
+        shortage = ask("Сколько молока не хватит до поставки?")
+        assert shortage["kind"] == "shortage" and "17 л" in shortage["answer"]
+        assert ask("Почему выросли списания за неделю?")["kind"] == "unsupported"
 
         before = client.get(f"{SHYMKENT}/shift").json()
         client.post(f"{SHYMKENT}/shift/losses", json=loss_request(before)).raise_for_status()
@@ -132,3 +140,13 @@ def test_copilot_uses_current_recipe_stock_and_shift(tmp_path):
         assert "с 17 л до 19 л" in explained["answer"]
         assert "24 л" in explained["answer"] and "страховой запас" in explained["answer"]
         assert client.get("/api/stores/unknown/shift").status_code == 404
+
+
+def test_configured_snapshot_is_loaded_and_labelled(tmp_path, monkeypatch):
+    snapshot = tmp_path / "snapshot.json"
+    snapshot.write_text(load_demo().model_dump_json(), encoding="utf-8")
+    monkeypatch.setenv("COYOTE_DATASET_PATH", str(snapshot))
+    with TestClient(create_app(tmp_path / "shift.sqlite3")) as client:
+        forecast = client.get(f"{SHYMKENT}/forecast").json()
+        assert forecast["dataMode"] == "imported"
+        assert milk(forecast)["recommendedQty"] == 24_000

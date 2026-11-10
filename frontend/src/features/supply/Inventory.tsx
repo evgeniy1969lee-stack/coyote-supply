@@ -6,6 +6,7 @@ import {
 
 import { formatDate, formatQuantity } from './format'
 import { IngredientDetails } from './IngredientDetails'
+import { IngredientPhoto } from './IngredientPhoto'
 import type { DataIssue, Forecast, IngredientForecast, Risk, Unit } from './types'
 
 const reasonLabels: Record<DataIssue, string> = {
@@ -114,7 +115,12 @@ export function Inventory({ forecast, risksOnly, onFilterChange }: {
               <TableBody>
                 {visible.map((item) => (
                   <TableRow key={item.ingredientId} className="border-border">
-                    <TableCell className="h-15 ps-5 font-bold whitespace-normal wrap-break-word">{item.name}</TableCell>
+                    <TableCell className="h-15 ps-5 font-bold whitespace-normal wrap-break-word">
+                      <div className="flex items-center gap-3">
+                        <IngredientPhoto ingredientId={item.ingredientId} />
+                        <span className="min-w-0">{item.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-end tabular-nums">{shownQuantity(item.onHandQty, item.unit, 'Неизвестен')}</TableCell>
                     <TableCell className="ps-5 whitespace-normal"><RiskList item={item} /></TableCell>
                     <TableCell className="pe-5 text-end font-semibold tabular-nums">{shownQuantity(item.recommendedQty, item.unit, 'Нет данных')}</TableCell>
@@ -130,9 +136,12 @@ export function Inventory({ forecast, risksOnly, onFilterChange }: {
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card md:hidden">
             {visible.map((item) => (
               <li key={item.ingredientId} className="space-y-2 px-4 py-3">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2">
-                  <h3 className="font-semibold wrap-break-word">{item.name}</h3>
-                  <p className="text-xs text-muted-foreground">Остаток · {shownQuantity(item.onHandQty, item.unit, 'неизвестен')}</p>
+                <div className="flex items-center gap-3">
+                  <IngredientPhoto ingredientId={item.ingredientId} />
+                  <div className="min-w-0">
+                    <h3 className="font-semibold wrap-break-word">{item.name}</h3>
+                    <p className="text-xs text-muted-foreground">Остаток · {shownQuantity(item.onHandQty, item.unit, 'неизвестен')}</p>
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                   <RiskList item={item} />

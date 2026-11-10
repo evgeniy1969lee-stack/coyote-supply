@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Bot, CalendarDays, ClipboardList, MapPin, Package, Wifi } from 'lucide-react'
+import { ArrowUpRight, Bot, CalendarDays, ClipboardList, MapPin, Package } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { SheetTrigger } from '@/components/ui/sheet'
 import { CopilotPanel } from '@/features/shift/CopilotPanel'
 import { ShiftDashboard } from '@/features/shift/ShiftDashboard'
 import { loadShift, loadStores, requestError, type ShiftOverview } from '@/features/shift/api'
+import { buttonPointerMotion } from '@/features/shift/pointerMotion'
 import { DraftEditor } from '@/features/supply/DraftEditor'
 import { Inventory } from '@/features/supply/Inventory'
 import { PurchasePlan } from '@/features/supply/PurchasePlan'
-import { formatTimestamp } from '@/features/supply/format'
+import { formatStoreName, formatTimestamp } from '@/features/supply/format'
 import type { Draft, Store } from '@/features/supply/types'
 import '@/features/shift/shift.css'
 
@@ -92,8 +93,8 @@ function StoreWorkspace({ store, view, navigate }: {
 
   const draftAction = (
     <SheetTrigger asChild>
-      <Button type="button" className={view === 'shift' ? 'guardian-secondary h-11' : 'h-11 bg-white text-primary hover:bg-accent focus-visible:outline-white'}>
-        Открыть черновик <ArrowUpRight aria-hidden="true" />
+      <Button type="button" {...buttonPointerMotion} className={view === 'shift' ? 'guardian-secondary h-11 px-3' : 'h-11 bg-white px-3 text-primary hover:bg-accent focus-visible:outline-white'}>
+        <span className="pointer-button-label">Открыть черновик <ArrowUpRight aria-hidden="true" /></span>
       </Button>
     </SheetTrigger>
   )
@@ -150,16 +151,16 @@ export default function App() {
         <div className="page-shell os-topbar">
           <div className="os-brand">
             <img src="/global-coffee.svg" width="44" height="44" alt="Global Coffee" />
-            <div><strong>Coyote<span> OS</span></strong><p>Операции кофейни</p></div>
+            <div><strong>Coyote</strong><p>Операции кофейни</p></div>
           </div>
-          <nav aria-label="Разделы Coyote OS" className="os-nav">
+          <nav aria-label="Разделы Coyote" className="os-nav">
             {navigation.map(({ id, label, icon: Icon }) => (
-              <button key={id} type="button" aria-current={view === id ? 'page' : undefined} onClick={() => navigate(id)}>
-                <Icon size={18} aria-hidden="true" /> {label}
+              <button key={id} type="button" {...buttonPointerMotion} aria-current={view === id ? 'page' : undefined} onClick={() => navigate(id)}>
+                <span className="pointer-button-label"><Icon size={18} aria-hidden="true" /> {label}</span>
               </button>
             ))}
           </nav>
-          <span className="os-demo"><Wifi size={15} aria-hidden="true" /> Демо-данные</span>
+          <span className="os-team">Cheremsha</span>
         </div>
       </header>
       <main id="workspace" tabIndex={-1} className="page-shell os-workspace">
@@ -175,7 +176,7 @@ export default function App() {
               <span className="sr-only">Точка Global Coffee</span>
               <select value={store?.storeId ?? ''} disabled={!store} onChange={(event) => setStoreId(event.target.value)}>
                 {!store && <option value="">Точка Global Coffee</option>}
-                {stores?.map((item) => <option key={item.storeId} value={item.storeId}>{item.name}</option>)}
+                {stores?.map((item) => <option key={item.storeId} value={item.storeId}>{formatStoreName(item.name)}</option>)}
               </select>
             </label>
           </div>
@@ -184,7 +185,7 @@ export default function App() {
           <RetryPanel message={error} onRetry={() => { setError(''); setAttempt((value) => value + 1) }} />
         ) : (
           <p role="status" className="os-card p-6 text-muted-foreground">
-            {stores ? 'Демонстрационные точки отсутствуют.' : 'Подключаемся к сервису…'}
+            {stores ? 'Нет доступных точек.' : 'Подключаемся к сервису…'}
           </p>
         )}
       </main>

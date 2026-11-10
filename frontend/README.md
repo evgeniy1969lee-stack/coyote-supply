@@ -1,4 +1,4 @@
-# Coyote OS · фронтенд
+# Coyote · фронтенд
 
 React, TypeScript и Vite. Тема Tailwind в `src/index.css` использует цвета, радиусы и шрифт из [дизайна](../DESIGN.md). Компоненты shadcn находятся в `src/components/ui/`.
 

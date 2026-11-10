@@ -462,7 +462,8 @@
         },
         "dataMode": {
           "enum": [
-            "synthetic"
+            "synthetic",
+            "imported"
           ]
         },
         "asOf": {

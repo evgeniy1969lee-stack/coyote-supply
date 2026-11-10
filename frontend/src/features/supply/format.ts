@@ -18,6 +18,10 @@ export function formatQuantity(value: number, unit: Unit) {
   return `${numberFormat.format(quantity)} ${units[unit]}`
 }
 
+export function formatStoreName(name: string) {
+  return name.replace(/ · демо$/u, '')
+}
+
 export function formatKzt(value: number) {
   return `${numberFormat.format(value)} ₸`
 }

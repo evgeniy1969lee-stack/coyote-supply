@@ -102,7 +102,7 @@ class IngredientForecast(ContractModel):
 class Forecast(ContractModel):
     storeId: Id
     forecastId: Id
-    dataMode: Literal["synthetic"] = "synthetic"
+    dataMode: Literal["synthetic", "imported"] = "synthetic"
     asOf: AwareDatetime
     schedule: Schedule | None
     ingredients: list[IngredientForecast]

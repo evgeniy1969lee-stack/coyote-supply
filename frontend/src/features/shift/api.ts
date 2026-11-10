@@ -54,7 +54,7 @@ export type ShiftOverview = {
 }
 
 export type CopilotAnswer = {
-  kind: 'recipe' | 'stock' | 'shift' | 'loss' | 'unsupported'
+  kind: 'recipe' | 'stock' | 'purchase' | 'shortage' | 'shift' | 'loss' | 'unsupported'
   answer: string
   source: string
 }

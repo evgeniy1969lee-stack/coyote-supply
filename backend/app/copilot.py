@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from pydantic import StringConstraints
 
 from .data import Dataset
-from .schemas import ContractModel
+from .schemas import ContractModel, IngredientForecast
 from .shift import ShiftOverview, describe_quantity
 
 
@@ -14,7 +14,7 @@ class CopilotQuestion(ContractModel):
 
 
 class CopilotAnswer(ContractModel):
-    kind: Literal["recipe", "stock", "shift", "loss", "unsupported"]
+    kind: Literal["recipe", "stock", "purchase", "shortage", "shift", "loss", "unsupported"]
     answer: str
     source: str
 
@@ -39,9 +39,26 @@ INGREDIENTS = (
 )
 
 
+def purchase_components(item: IngredientForecast) -> str:
+    calculation = item.explanation
+    if calculation is None:
+        return ""
+    demand = describe_quantity(calculation.uncoveredWindowDemandQty, item.unit)
+    reserve = describe_quantity(max(0, calculation.safetyStockQty - calculation.endStockWithoutOrderQty), item.unit)
+    text = f" В расчёте после прихода учтены непокрытый расход {demand} и страховой запас {reserve}."
+    if item.recommendedQty is not None and item.recommendedQty > calculation.unroundedOrderQty:
+        text += f" Объём округлён до упаковок по {describe_quantity(item.packQty, item.unit)}."
+    return text
+
+
 def answer_question(dataset: Dataset, shift: ShiftOverview, question: str) -> CopilotAnswer:
     text = question.casefold().replace("ё", "е")
-    if any(stem in text for stem in ("списа", "потер", "пролив", "изменил", "пересчит", "не вырос")):
+    if any(stem in text for stem in ("списа", "потер", "пролив", "пересчит")):
+        if any(stem in text for stem in ("недел", "месяц", "вчера", "прошл", "статистик", "динамик", "дней", "дня")):
+            return CopilotAnswer(
+                kind="unsupported", answer="Доступен журнал текущей смены. Для сравнения периодов нужна история списаний.",
+                source="Журнал смены",
+            )
         if not shift.recentLosses:
             return CopilotAnswer(kind="loss", answer="В этой смене списаний пока нет.", source="Журнал смены")
         event = shift.recentLosses[0]
@@ -63,16 +80,12 @@ def answer_question(dataset: Dataset, shift: ShiftOverview, question: str) -> Co
             else:
                 answer += f" Новый объём закупки — {order}."
             item = next(item for item in shift.forecast.ingredients if item.ingredientId == event.ingredientId)
-            if item.explanation:
-                calculation = item.explanation
-                demand = describe_quantity(calculation.uncoveredWindowDemandQty, event.unit)
-                reserve = describe_quantity(max(0, calculation.safetyStockQty - calculation.endStockWithoutOrderQty), event.unit)
-                answer += f" В расчёте после прихода учтены непокрытый расход {demand} и страховой запас {reserve}."
-                if event.after.recommendedQty > calculation.unroundedOrderQty:
-                    answer += f" Объём округлён до упаковок по {describe_quantity(item.packQty, event.unit)}."
+            answer += purchase_components(item)
         return CopilotAnswer(kind="loss", answer=answer, source="Журнал смены и пересчёт прогноза")
 
-    if not any(word in text for word in ("остал", "склад", "запас", "законч", "заказ")):
+    purchase = any(word in text for word in ("заказ", "закуп", "купить", "упаков"))
+    shortage_question = any(word in text for word in ("дефицит", "нехват", "не хват", "до поставки"))
+    if not purchase and not shortage_question and not any(word in text for word in ("остал", "склад", "запас", "законч")):
         for sku, name, aliases in DRINKS:
             if not any(alias in text for alias in aliases):
                 continue
@@ -98,16 +111,38 @@ def answer_question(dataset: Dataset, shift: ShiftOverview, question: str) -> Co
         item = next((row for row in shift.forecast.ingredients if row.ingredientId == ingredient_id), None)
         if item is None:
             break
+        shortage = next((risk for risk in item.risks if risk.type == "stockout"), None)
+        if shortage_question:
+            if item.explanation is None:
+                answer = f"{item.name} · для оценки дефицита нужно сверить данные."
+            elif shortage:
+                amount = describe_quantity(shortage.quantity, item.unit)
+                answer = f"{item.name} · до поставки не хватит {amount}. Первая нехватка ожидается {shortage.date:%d.%m}."
+            else:
+                answer = f"{item.name} · прогноз показывает достаточный запас до поставки."
+            return CopilotAnswer(kind="shortage", answer=answer, source="Прогноз до ближайшей поставки")
+        if purchase:
+            if item.recommendedQty is None:
+                answer = f"{item.name} · для рекомендации к закупке нужно сверить данные."
+            elif item.recommendedQty == 0:
+                answer = f"{item.name} · к ближайшей поставке дополнительная закупка не требуется."
+            else:
+                quantity = describe_quantity(item.recommendedQty, item.unit)
+                packs = item.recommendedQty // item.packQty
+                answer = f"{item.name} · рекомендуется закупить {quantity} ({packs} уп.)." + purchase_components(item)
+            return CopilotAnswer(kind="purchase", answer=answer, source="Расчёт закупки выбранной точки")
         if item.onHandQty is None or any(
             risk.type == "insufficient_data" and risk.reason == "stale_on_hand" for risk in item.risks
         ):
             answer = f"{item.name} · актуальный остаток нужно сверить."
         else:
             answer = f"{item.name} · на складе {describe_quantity(item.onHandQty, item.unit)}."
-            shortage = next((risk for risk in item.risks if risk.type == "stockout"), None)
             if shortage:
                 answer += f" Ожидается нехватка с {shortage.date:%d.%m}."
         return CopilotAnswer(kind="stock", answer=answer, source="Склад выбранной точки")
+
+    if purchase or shortage_question:
+        return CopilotAnswer(kind="unsupported", answer="Укажите ингредиент, для которого нужен расчёт.", source="Прогноз точки")
 
     if any(word in text for word in ("смен", "задач", "перв", "приоритет", "план", "что дел")):
         action = next((action for action in shift.actions if action.priority != "done"), None)
@@ -116,6 +151,6 @@ def answer_question(dataset: Dataset, shift: ShiftOverview, question: str) -> Co
 
     return CopilotAnswer(
         kind="unsupported",
-        answer="Могу подсказать состав напитка, остаток ингредиента, приоритет смены или эффект списания.",
+        answer="Могу подсказать состав напитка, остаток, объём закупки, дефицит до поставки или приоритет смены.",
         source="Вопрос вне данных смены",
     )

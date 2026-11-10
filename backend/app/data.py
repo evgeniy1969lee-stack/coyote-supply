@@ -116,6 +116,7 @@ class StoreData(ContractModel):
 
 class Dataset(ContractModel):
     version: Id
+    data_mode: Literal["synthetic", "imported"] = "synthetic"
     catalog: dict[Id, Ingredient]
     recipes: list[Recipe]
     stores: list[StoreData]
