@@ -216,6 +216,40 @@
   font-size: .74rem;
   font-weight: 700;
 }
+.vision-live-tag { display: flex; align-items: center; gap: 6px; }
+.vision-live-tag i { width: 7px; height: 7px; border-radius: 50%; background: #8fe4a9; }
+.vision-live-preview video { object-fit: fill; }
+.vision-live-box {
+  position: absolute;
+  border: 2px solid #a2ffb8;
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px #20352ab0;
+  pointer-events: none;
+}
+.vision-live-reading {
+  position: absolute;
+  inset-inline-start: 11px;
+  inset-block-end: 11px;
+  max-width: calc(100% - 22px);
+  border-radius: 7px;
+  background: #2f222bef;
+  padding: 6px 9px;
+  font-size: .79rem;
+  font-weight: 700;
+}
+.vision-journal { border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+.vision-journal-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 9px;
+  padding-block: 10px;
+  font-size: .82rem;
+}
+.vision-journal-row svg { margin-top: 2px; color: var(--primary); }
+.vision-journal-row strong, .vision-journal-row span { display: block; overflow-wrap: anywhere; }
+.vision-journal-row span, .vision-journal-row time { color: var(--muted-foreground); font-size: .74rem; }
+.vision-journal-row time { max-width: 85px; text-align: end; }
 .vision-observation {
   display: flex;
   align-items: flex-start;

@@ -77,6 +77,24 @@ export type VisionProposal = {
   options: RecipePortion[]
 }
 
+export type LiveEvent = {
+  eventId: string
+  stationId: string
+  storeId: string
+  ingredientId: string
+  ingredientName: string
+  source: 'code' | 'model'
+  observedAt: string
+}
+
+type LiveOverview = {
+  storeId: string
+  products: { ingredientId: string; name: string; code: string }[]
+  events: LiveEvent[]
+}
+
+type LiveFrame = { ingredientName: string | null; event: LiveEvent | null }
+
 export type CopilotAnswer = {
   kind: 'recipe' | 'stock' | 'purchase' | 'shortage' | 'shift' | 'loss' | 'unsupported'
   answer: string
@@ -96,7 +114,7 @@ async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
   const data = await response.json().catch(() => null)
   if (!response.ok) {
     throw new ApiError(
-      data?.error?.message ?? 'Сервер не смог выполнить запрос. Повторите попытку.',
+      data?.error?.message ?? (typeof data?.detail === 'string' ? data.detail : 'Сервер не смог выполнить запрос. Повторите попытку.'),
       response.status,
       data?.error?.details ?? [],
     )
@@ -126,6 +144,20 @@ export function recordLoss(storeId: string, request: LossRequest) {
 
 export function analyzeVision(storeId: string, frame: Blob, signal: AbortSignal) {
   return jsonRequest<VisionProposal>(`${storePath(storeId)}/shift/vision`, {
+    method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: frame, signal,
+  })
+}
+
+export function loadLiveVision(storeId: string, signal: AbortSignal) {
+  return jsonRequest<LiveOverview>(`${storePath(storeId)}/vision/live`, { signal })
+}
+
+export function recordLiveCode(storeId: string, request: { eventId: string; stationId: string; code: string }, signal: AbortSignal) {
+  return jsonRequest<LiveEvent>(`${storePath(storeId)}/vision/live/events`, { ...withJson('POST', request), signal })
+}
+
+export function analyzeLiveFrame(storeId: string, stationId: string, frame: Blob, signal: AbortSignal) {
+  return jsonRequest<LiveFrame>(`${storePath(storeId)}/vision/live/frames/${stationId}`, {
     method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: frame, signal,
   })
 }

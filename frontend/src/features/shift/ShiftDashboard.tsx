@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { ArrowRight, Bot, Check, CircleAlert, ClipboardList, Droplets, Package, Sparkles, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatDate, formatQuantity } from '@/features/supply/format'
-import type { Risk, Unit } from '@/features/supply/types'
+import type { Risk, Store, Unit } from '@/features/supply/types'
 import { prompts } from './prompts'
 import { LossSheet } from './LossSheet'
 import { VisionSheet } from './VisionSheet'
@@ -62,7 +62,8 @@ function StockImpact({ event, onAsk }: { event: StockEvent; onAsk: (question: st
   )
 }
 
-export function ShiftDashboard({ shift, onStockChange, onRefresh, onSupply, onAsk, draftAction }: {
+export function ShiftDashboard({ store, shift, onStockChange, onRefresh, onSupply, onAsk, draftAction }: {
+  store: Store
   shift: ShiftOverview
   onStockChange: (data: ShiftOverview) => void
   onRefresh: () => Promise<void>
@@ -123,7 +124,7 @@ export function ShiftDashboard({ shift, onStockChange, onRefresh, onSupply, onAs
         </div>
       </section>
 
-      <VisionSheet storeId={shift.storeId} onChange={onStockChange} onRefresh={onRefresh} />
+      <VisionSheet store={store} onChange={onStockChange} onRefresh={onRefresh} />
       {recent && <StockImpact event={recent} onAsk={onAsk} />}
 
       <section className="shift-metrics" aria-label="Показатели смены">

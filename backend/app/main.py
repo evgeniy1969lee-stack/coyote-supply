@@ -20,8 +20,9 @@ from .schemas import (
 )
 from .shift import ConsumptionRequest, LossRejected, LossRequest, ShiftChanged, ShiftOverview, ShiftService, summarize_shift
 from .vision import (
-    MAX_FRAME_BYTES, FrameHint, InvalidFrame, VisionProposal, VisionUnavailable, analyze_frame, make_proposal,
+    FrameHint, FrameTooLarge, InvalidFrame, VisionProposal, VisionUnavailable, analyze_frame, make_proposal, read_frame,
 )
+from .vision_live import initialize_journal, live_router
 
 BACKEND = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = BACKEND / "data" / "drafts.sqlite3"
@@ -63,6 +64,7 @@ def create_app(
         shift = ShiftService(snapshot)
         with database.transaction(write=True) as connection:
             shift.initialize(connection)
+            initialize_journal(connection)
         stores.stores = [store.info for store in snapshot.stores]
         yield
 
@@ -85,7 +87,7 @@ def create_app(
             )
             for issue in exc.errors()
         ]
-        return error("invalid_shift" if "/shift/" in request.url.path else "invalid_draft", details)
+        return error("invalid_shift" if any(route in request.url.path for route in ("/shift/", "/vision/live")) else "invalid_draft", details)
 
     @app.get("/api/health", response_model=Health)
     def health() -> Health:
@@ -180,15 +182,11 @@ def create_app(
     async def post_vision(id: str, request: Request) -> VisionProposal | JSONResponse:
         if id not in shift.stores:
             return error("store_not_found")
-        if request.headers.get("content-type", "").split(";")[0].strip().lower() != "image/jpeg":
-            return error("invalid_frame")
-        frame = bytearray()
-        async for chunk in request.stream():
-            if len(frame) + len(chunk) > MAX_FRAME_BYTES:
-                return error("frame_too_large")
-            frame.extend(chunk)
         try:
-            hint = await run_in_threadpool(analyze_frame, bytes(frame))
+            frame = await read_frame(request)
+            hint = await run_in_threadpool(analyze_frame, frame)
+        except FrameTooLarge:
+            return error("frame_too_large")
         except InvalidFrame:
             return error("invalid_frame")
         except VisionUnavailable:
@@ -205,6 +203,8 @@ def create_app(
         with database.transaction() as connection:
             overview = summarize_shift(shift.current(connection, id), database.get(connection, id))
         return respond(shift.dataset, overview, request.question)
+
+    app.include_router(live_router(database, lambda: shift))
 
     if (frontend_dist / "index.html").is_file():
         app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")

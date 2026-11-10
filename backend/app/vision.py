@@ -8,8 +8,9 @@ import re
 from dataclasses import dataclass
 from threading import BoundedSemaphore
 from typing import Literal
-from urllib.request import Request, urlopen
+from urllib.request import Request as OutgoingRequest, urlopen
 
+from fastapi import Request
 from PIL import Image
 
 from .copilot import DRINKS
@@ -25,6 +26,10 @@ _slot = BoundedSemaphore(1)
 
 
 class InvalidFrame(ValueError):
+    pass
+
+
+class FrameTooLarge(ValueError):
     pass
 
 
@@ -55,6 +60,17 @@ class VisionProposal(ContractModel):
     options: list[RecipePortion]
 
 
+async def read_frame(request: Request) -> bytes:
+    if request.headers.get("content-type", "").split(";")[0].strip().lower() != "image/jpeg":
+        raise InvalidFrame
+    frame = bytearray()
+    async for chunk in request.stream():
+        if len(frame) + len(chunk) > MAX_FRAME_BYTES:
+            raise FrameTooLarge
+        frame.extend(chunk)
+    return bytes(frame)
+
+
 def _normalized_jpeg(frame: bytes) -> str:
     try:
         with Image.open(io.BytesIO(frame), formats=("JPEG",)) as image:
@@ -80,7 +96,7 @@ def request_caption(endpoint: str, data_url: str) -> str:
             ],
         }],
     }
-    request = Request(
+    request = OutgoingRequest(
         f"{endpoint.rstrip('/')}/v1/chat/completions", data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json"},
     )

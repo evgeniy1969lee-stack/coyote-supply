@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowRight, Camera, Check, ScanLine, Sparkles } from 'lucide-react'
+import { Camera, Check, ScanLine, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { formatQuantity } from '@/features/supply/format'
+import type { Store } from '@/features/supply/types'
 import {
   analyzeVision, ApiError, recordConsumption, requestError,
   type ConsumptionRequest, type RecipePortion, type ShiftOverview, type VisionProposal,
 } from './api'
 import { VisionCapture } from './VisionCapture'
+import { VisionLive } from './VisionLive'
 
 const hintTitles = {
   possible_pour: 'Похоже на наливание',
@@ -171,8 +173,8 @@ function VisionSession({ storeId, onChange, onRefresh, onClose, onSaving, saving
   )
 }
 
-export function VisionSheet({ storeId, onChange, onRefresh }: {
-  storeId: string
+export function VisionSheet({ store, onChange, onRefresh }: {
+  store: Store
   onChange: (shift: ShiftOverview) => void
   onRefresh: () => Promise<void>
 }) {
@@ -180,21 +182,20 @@ export function VisionSheet({ storeId, onChange, onRefresh }: {
   const [saving, setSaving] = useState(false)
 
   return (
-    <Sheet open={open} onOpenChange={(next) => { if (!saving) setOpen(next) }}>
-      <section className="os-card vision-launch" aria-labelledby="vision-title">
+    <section className="os-card vision-launch" aria-labelledby="vision-title">
         <div className="vision-launch-copy">
           <div className="os-tile os-tile-violet"><Camera size={22} aria-hidden="true" /></div>
           <div>
             <h2 id="vision-title">Coyote Vision</h2>
-            <p>Кадр приготовления → норма по техкарте → расход в прогнозе</p>
+            <p>Распознавание у стойки и журнал наблюдений кофейни</p>
           </div>
         </div>
-        <SheetTrigger asChild>
-          <Button type="button" variant="outline" className="h-11 text-primary">
-            Открыть Vision <ArrowRight aria-hidden="true" />
-          </Button>
-        </SheetTrigger>
-      </section>
+      <div className="flex flex-wrap items-center gap-2">
+        <VisionLive store={store} />
+        <Sheet open={open} onOpenChange={(next) => { if (!saving) setOpen(next) }}>
+          <SheetTrigger asChild>
+            <Button type="button" variant="outline" className="h-11 text-primary">Один кадр</Button>
+          </SheetTrigger>
       <SheetContent showCloseButton={false} className="w-full gap-0 overflow-y-auto bg-card sm:max-w-[540px]">
         <SheetHeader className="sheet-masthead flex-row items-start justify-between gap-3 border-b border-border p-4 sm:p-6">
           <div>
@@ -206,9 +207,11 @@ export function VisionSheet({ storeId, onChange, onRefresh }: {
           </div>
           <SheetClose asChild><Button type="button" variant="outline" className="h-11" disabled={saving}>Закрыть</Button></SheetClose>
         </SheetHeader>
-        {open && <VisionSession storeId={storeId} onChange={onChange} onRefresh={onRefresh}
+        {open && <VisionSession storeId={store.storeId} onChange={onChange} onRefresh={onRefresh}
           onClose={() => setOpen(false)} saving={saving} onSaving={setSaving} />}
       </SheetContent>
-    </Sheet>
+        </Sheet>
+      </div>
+    </section>
   )
 }

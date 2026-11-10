@@ -104,7 +104,7 @@ function StoreWorkspace({ store, view, navigate }: {
       {error && <RetryPanel message={error} onRetry={retry} />}
       {view === 'shift' && (
         <ShiftDashboard
-          shift={shift} onStockChange={acceptStockChange} onRefresh={reload}
+          store={store} shift={shift} onStockChange={acceptStockChange} onRefresh={reload}
           onSupply={() => navigate('supply')} onAsk={openCopilot} draftAction={draftAction}
         />
       )}
