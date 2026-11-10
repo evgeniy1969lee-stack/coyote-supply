@@ -58,6 +58,7 @@ export type CopilotAnswer = {
   answer: string
   source: string
   model?: string | null
+  explanation?: string | null
 }
 
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {

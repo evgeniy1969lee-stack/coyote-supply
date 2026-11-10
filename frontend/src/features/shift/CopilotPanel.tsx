@@ -61,6 +61,7 @@ export function CopilotPanel({ storeId, initialQuestion }: { storeId: string; in
           <div className="copilot-turn" key={index}>
             <p className="copilot-question">{turn.question}</p>
             <div className="copilot-answer">
+              {turn.answer.explanation && <p className="mb-2">{turn.answer.explanation}</p>}
               <p>{turn.answer.answer}</p>
               <p className="copilot-source">
                 {turn.answer.source}{turn.answer.model && ` · ${turn.answer.model}`}

@@ -47,7 +47,7 @@
 
 .pointer-button-label { display: inline-flex; align-items: center; gap: inherit; pointer-events: none; }
 
-.os-team, .os-shift-date, .os-store {
+.os-shift-date, .os-store {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -56,7 +56,6 @@
   font-weight: 700;
 }
 
-.os-team { justify-self: end; color: var(--primary); letter-spacing: .025em; }
 .os-workspace { display: grid; gap: 22px; padding-block: clamp(22px, 4vw, 42px); }
 .os-page-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 22px; }
 .os-page-heading .page-title { font-size: clamp(2.3rem, 5vw, 3.65rem); }

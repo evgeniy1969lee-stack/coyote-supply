@@ -160,7 +160,6 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <span className="os-team">Cheremsha</span>
         </div>
       </header>
       <main id="workspace" tabIndex={-1} className="page-shell os-workspace">

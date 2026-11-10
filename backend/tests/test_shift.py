@@ -155,6 +155,7 @@ def test_configured_snapshot_is_loaded_and_labelled(tmp_path, monkeypatch):
 def test_qwen_routes_free_wording_and_preserves_authoritative_answer(tmp_path, monkeypatch):
     monkeypatch.setenv("COYOTE_LLM_URL", "http://127.0.0.1:8081")
     monkeypatch.setattr("backend.app.copilot_llm.select_route", lambda *args: "purchase:milk")
+    monkeypatch.setattr("backend.app.copilot_llm.complete", lambda *args: "Сверьте доступный запас с потребностью на период после поставки.")
     with TestClient(create_app(tmp_path / "shift.sqlite3")) as client:
         def ask(question):
             return client.post(f"{SHYMKENT}/shift/copilot", json={"question": question}).json()
@@ -162,9 +163,13 @@ def test_qwen_routes_free_wording_and_preserves_authoritative_answer(tmp_path, m
         result = ask("Какой объём молочки брать у поставщика?")
         assert result["model"] == "Qwen2.5-0.5B-Instruct"
         assert result["kind"] == "purchase" and "24 л" in result["answer"]
+        assert result["explanation"].startswith("Сверьте")
         stock = ask("Сколько молока осталось?")
         assert stock["kind"] == "stock" and "20 л" in stock["answer"]
-        assert stock["model"] is None
+        assert stock["model"] == "Qwen2.5-0.5B-Instruct"
 
         monkeypatch.setattr("backend.app.copilot_llm.select_route", lambda *args: "purchase:unknown")
-        assert ask("Сколько молока заказать?")["model"] is None
+        assert ask("Какой объём молочки брать у поставщика?")["model"] is None
+        monkeypatch.setattr("backend.app.copilot_llm.complete", lambda *args: "На самом деле нужно заказать 900 л.")
+        unsafe = ask("Сколько молока заказать?")
+        assert "24 л" in unsafe["answer"] and unsafe["explanation"] is None

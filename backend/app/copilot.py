@@ -18,6 +18,7 @@ class CopilotAnswer(ContractModel):
     answer: str
     source: str
     model: str | None = None
+    explanation: str | None = None
 
 
 DRINKS = (

@@ -31,7 +31,7 @@ Coyote Supply стал разделом закупок в проекте Coyote 
 |---|---|
 | `GET /shift` | Снимок с `forecast`, `draft`, `guardian`, `actions` и последними записями в `recentLosses`. |
 | `POST /shift/losses` | `eventId`, актуальный `forecastId`, `ingredientId` и целое `quantity` в базовой единице. Возвращает обновлённый снимок и значения до и после в журнале. Для 2 л отправляется 2000 мл. |
-| `POST /shift/copilot` | `question` длиной до 280 символов. Возвращает `kind`, `answer`, `source` и имя `model`, если модель участвовала в выборе ответа. |
+| `POST /shift/copilot` | `question` длиной до 280 символов. Возвращает `kind`, `answer`, `source`, необязательное пояснение `explanation` и имя `model`, если модель участвовала в ответе. |
 
 При смене прогноза операция списания отвечает `409 stale_shift`. Невалидное списание отвечает `422 invalid_shift` с путём поля и причиной. Для диагностики можно использовать Swagger. [Локальный Swagger](http://127.0.0.1:8090/docs)
 
