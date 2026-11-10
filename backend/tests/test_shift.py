@@ -150,3 +150,21 @@ def test_configured_snapshot_is_loaded_and_labelled(tmp_path, monkeypatch):
         forecast = client.get(f"{SHYMKENT}/forecast").json()
         assert forecast["dataMode"] == "imported"
         assert milk(forecast)["recommendedQty"] == 24_000
+
+
+def test_qwen_routes_free_wording_and_preserves_authoritative_answer(tmp_path, monkeypatch):
+    monkeypatch.setenv("COYOTE_LLM_URL", "http://127.0.0.1:8081")
+    monkeypatch.setattr("backend.app.copilot_llm.select_route", lambda *args: "purchase:milk")
+    with TestClient(create_app(tmp_path / "shift.sqlite3")) as client:
+        def ask(question):
+            return client.post(f"{SHYMKENT}/shift/copilot", json={"question": question}).json()
+
+        result = ask("Какой объём молочки брать у поставщика?")
+        assert result["model"] == "Qwen2.5-0.5B-Instruct"
+        assert result["kind"] == "purchase" and "24 л" in result["answer"]
+        stock = ask("Сколько молока осталось?")
+        assert stock["kind"] == "stock" and "20 л" in stock["answer"]
+        assert stock["model"] is None
+
+        monkeypatch.setattr("backend.app.copilot_llm.select_route", lambda *args: "purchase:unknown")
+        assert ask("Сколько молока заказать?")["model"] is None

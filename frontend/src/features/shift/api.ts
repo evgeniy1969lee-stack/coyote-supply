@@ -57,6 +57,7 @@ export type CopilotAnswer = {
   kind: 'recipe' | 'stock' | 'purchase' | 'shortage' | 'shift' | 'loss' | 'unsupported'
   answer: string
   source: string
+  model?: string | null
 }
 
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {

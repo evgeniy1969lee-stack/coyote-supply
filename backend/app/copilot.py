@@ -17,6 +17,7 @@ class CopilotAnswer(ContractModel):
     kind: Literal["recipe", "stock", "purchase", "shortage", "shift", "loss", "unsupported"]
     answer: str
     source: str
+    model: str | None = None
 
 
 DRINKS = (
@@ -84,7 +85,7 @@ def answer_question(dataset: Dataset, shift: ShiftOverview, question: str) -> Co
         return CopilotAnswer(kind="loss", answer=answer, source="Журнал смены и пересчёт прогноза")
 
     purchase = any(word in text for word in ("заказ", "закуп", "купить", "упаков"))
-    shortage_question = any(word in text for word in ("дефицит", "нехват", "не хват", "до поставки"))
+    shortage_question = any(word in text for word in ("дефицит", "нехват", "не хват", "хватит", "до поставки", "до прихода"))
     if not purchase and not shortage_question and not any(word in text for word in ("остал", "склад", "запас", "законч")):
         for sku, name, aliases in DRINKS:
             if not any(alias in text for alias in aliases):

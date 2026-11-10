@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .copilot import CopilotAnswer, CopilotQuestion, answer_question
+from .copilot import CopilotAnswer, CopilotQuestion
+from .copilot_llm import respond
 from .data import Dataset
 from .demo_data import load_dataset
 from .drafts import DraftStore, price_draft
@@ -157,7 +158,7 @@ def create_app(
             return error("store_not_found")
         with database.transaction() as connection:
             overview = summarize_shift(shift.current(connection, id), database.get(connection, id))
-        return answer_question(shift.dataset, overview, request.question)
+        return respond(shift.dataset, overview, request.question)
 
     if (frontend_dist / "index.html").is_file():
         app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
