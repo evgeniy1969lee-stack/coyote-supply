@@ -1,5 +1,6 @@
 import sqlite3
-from contextlib import closing
+from collections.abc import Iterator
+from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -24,22 +25,29 @@ class DraftStore:
                 )
             """)
 
-    def get(self, store_id: str) -> Draft | None:
+    @contextmanager
+    def transaction(self, *, write: bool = False) -> Iterator[sqlite3.Connection]:
         with closing(sqlite3.connect(self.path)) as connection:
-            row = connection.execute(
-                "SELECT payload FROM drafts WHERE store_id = ?", (store_id,),
-            ).fetchone()
+            with connection:
+                connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+                yield connection
+
+    @staticmethod
+    def get(connection: sqlite3.Connection, store_id: str) -> Draft | None:
+        row = connection.execute(
+            "SELECT payload FROM drafts WHERE store_id = ?", (store_id,),
+        ).fetchone()
         return Draft.model_validate_json(row[0]) if row is not None else None
 
-    def replace(self, store_id: str, draft: Draft | None) -> None:
-        with closing(sqlite3.connect(self.path)) as connection, connection:
-            if draft is None:
-                connection.execute("DELETE FROM drafts WHERE store_id = ?", (store_id,))
-            else:
-                connection.execute("""
-                    INSERT INTO drafts (store_id, payload) VALUES (?, ?)
-                    ON CONFLICT(store_id) DO UPDATE SET payload = excluded.payload
-                """, (store_id, draft.model_dump_json()))
+    @staticmethod
+    def replace(connection: sqlite3.Connection, store_id: str, draft: Draft | None) -> None:
+        if draft is None:
+            connection.execute("DELETE FROM drafts WHERE store_id = ?", (store_id,))
+        else:
+            connection.execute("""
+                INSERT INTO drafts (store_id, payload) VALUES (?, ?)
+                ON CONFLICT(store_id) DO UPDATE SET payload = excluded.payload
+            """, (store_id, draft.model_dump_json()))
 
 
 def price_draft(request: DraftRequest, forecast: Forecast) -> tuple[Draft | None, list[ErrorDetail]]:

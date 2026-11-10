@@ -142,7 +142,7 @@ class ErrorDetail(ContractModel):
 
 
 class ErrorBody(ContractModel):
-    code: Literal["store_not_found", "stale_forecast", "invalid_draft"]
+    code: Literal["store_not_found", "stale_forecast", "invalid_draft", "stale_shift", "invalid_shift"]
     message: str
     details: list[ErrorDetail] = Field(default_factory=list)
 

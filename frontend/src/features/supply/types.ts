@@ -7,6 +7,15 @@ export type Store = {
   asOf: string
 }
 
+export type DraftInputRow = { ingredientId: string; quantity: number }
+
+export type Draft = {
+  forecastId: string
+  rows: (DraftInputRow & { packCount: number; packPriceKzt: number; lineTotalKzt: number })[]
+  totalKzt: number
+  savedAt: string
+}
+
 export type DataIssue =
   | 'missing_on_hand'
   | 'stale_on_hand'
