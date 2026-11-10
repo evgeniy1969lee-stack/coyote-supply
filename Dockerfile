@@ -15,7 +15,9 @@ ADD --checksum=sha256:7e943f7c53f0382a6fc41b6ee0c2def63ba4fded9ab8ed039cc9e2ab90
 
 FROM python:3.11-slim-trixie
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 libcurl4t64 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 libcurl4t64 libgl1 libglib2.0-0t64 \
+    tesseract-ocr tesseract-ocr-eng tesseract-ocr-rus tesseract-ocr-kaz \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=model /llama /opt/llama
 COPY --from=model /model.gguf /opt/model.gguf
 COPY --from=model /vision.gguf /vision-mmproj.gguf /opt/

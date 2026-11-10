@@ -17,7 +17,8 @@ from pydantic import AwareDatetime, Field, UUID4
 from .drafts import DraftStore
 from .schemas import ContractModel, Id
 from .shift import ShiftService
-from .vision import FrameTooLarge, InvalidFrame, VisionUnavailable, analyze_frame, read_frame
+from .vision import FrameTooLarge, InvalidFrame, VisionUnavailable, read_frame
+from .vision_labels import analyze_label
 
 MARKER_PREFIX = "coyote:"
 JOURNAL_LIMIT = 500
@@ -35,7 +36,7 @@ class LiveEvent(ContractModel):
     storeId: Id
     ingredientId: Id
     ingredientName: str
-    source: Literal["code", "model"]
+    source: Literal["code", "model", "label"]
     observedAt: AwareDatetime
 
 
@@ -101,8 +102,8 @@ def append_event(connection: sqlite3.Connection, event: LiveEvent) -> LiveEvent:
     return event
 
 
-class ModelStreak:
-    """A tentative label needs corroboration from a different frame."""
+class LabelStreak:
+    """One reading needs corroboration from a different frame."""
 
     def __init__(self) -> None:
         self._lock = Lock()
@@ -123,7 +124,7 @@ class ModelStreak:
 
 def live_router(database: DraftStore, get_shift: Callable[[], ShiftService]) -> APIRouter:
     router = APIRouter(prefix="/api/stores/{id}/vision/live", tags=["Vision Live"])
-    streak = ModelStreak()
+    streak = LabelStreak()
 
     def products(id: str) -> dict[str, str]:
         shift = get_shift()
@@ -160,7 +161,7 @@ def live_router(database: DraftStore, get_shift: Callable[[], ShiftService]) -> 
         with database.transaction(write=True) as connection:
             return append_event(connection, event)
 
-    def record_model(id: str, station: UUID, ingredient: str, name: str) -> LiveEvent | None:
+    def record_label(id: str, station: UUID, ingredient: str, name: str) -> LiveEvent | None:
         now = datetime.now(UTC)
         with database.transaction(write=True) as connection:
             seen = connection.execute(
@@ -172,7 +173,7 @@ def live_router(database: DraftStore, get_shift: Callable[[], ShiftService]) -> 
                 return None
             return append_event(connection, LiveEvent(
                 eventId=uuid4(), stationId=station, storeId=id, ingredientId=ingredient,
-                ingredientName=name, source="model", observedAt=now,
+                ingredientName=name, source="label", observedAt=now,
             ))
 
     @router.post("/frames/{station}", response_model=LiveFrame)
@@ -180,18 +181,18 @@ def live_router(database: DraftStore, get_shift: Callable[[], ShiftService]) -> 
         catalog = products(id)
         try:
             frame = await read_frame(request)
-            hint = await run_in_threadpool(analyze_frame, frame)
+            ingredient = await run_in_threadpool(analyze_label, frame)
         except FrameTooLarge:
             raise HTTPException(413, "Кадр слишком большой.") from None
         except InvalidFrame:
             raise HTTPException(422, "Не удалось прочитать кадр.") from None
         except VisionUnavailable:
-            raise HTTPException(503, "Модель занята. Live повторит анализ.") from None
-        ingredient = hint.ingredient_id if hint.ingredient_id in catalog else None
+            raise HTTPException(503, "Распознавание этикетки пока недоступно. Live повторит попытку.") from None
+        ingredient = ingredient if ingredient in catalog else None
         confirmed = streak.matches((id, station), ingredient, frame)
         if ingredient is None:
             return LiveFrame()
-        event = await run_in_threadpool(record_model, id, station, ingredient, catalog[ingredient]) if confirmed else None
+        event = await run_in_threadpool(record_label, id, station, ingredient, catalog[ingredient]) if confirmed else None
         return LiveFrame(ingredientId=ingredient, ingredientName=catalog[ingredient], event=event)
 
     return router

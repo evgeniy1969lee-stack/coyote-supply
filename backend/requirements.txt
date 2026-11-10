@@ -7,3 +7,4 @@ httpx2==2.16.0
 pytest==8.4.1
 jsonschema==4.24.0
 Pillow==12.3.0
+rapidocr-onnxruntime==1.4.4

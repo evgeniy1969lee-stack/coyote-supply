@@ -226,6 +226,13 @@
   box-shadow: 0 0 0 2px #20352ab0;
   pointer-events: none;
 }
+.vision-label-guide {
+  position: absolute;
+  inset: 15%;
+  border: 1px dashed #ffefd8b8;
+  border-radius: 8px;
+  pointer-events: none;
+}
 .vision-live-reading {
   position: absolute;
   inset-inline-start: 11px;

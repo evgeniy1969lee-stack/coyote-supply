@@ -71,15 +71,19 @@ async def read_frame(request: Request) -> bytes:
     return bytes(frame)
 
 
-def _normalized_jpeg(frame: bytes) -> str:
+def decode_jpeg(frame: bytes, *, max_side: int = MAX_FRAME_SIDE) -> Image.Image:
     try:
         with Image.open(io.BytesIO(frame), formats=("JPEG",)) as image:
-            if min(image.size) < 32 or max(image.size) > MAX_FRAME_SIDE:
+            if min(image.size) < 32 or max(image.size) > max_side:
                 raise InvalidFrame
-            encoded = io.BytesIO()
-            image.convert("RGB").save(encoded, "JPEG", quality=85)
+            return image.convert("RGB")
     except (OSError, Image.DecompressionBombError) as exc:
         raise InvalidFrame from exc
+
+
+def _normalized_jpeg(frame: bytes) -> str:
+    encoded = io.BytesIO()
+    decode_jpeg(frame).save(encoded, "JPEG", quality=85)
     return "data:image/jpeg;base64," + base64.b64encode(encoded.getvalue()).decode("ascii")
 
 

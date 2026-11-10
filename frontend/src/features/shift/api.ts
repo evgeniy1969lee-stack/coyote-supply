@@ -83,7 +83,7 @@ export type LiveEvent = {
   storeId: string
   ingredientId: string
   ingredientName: string
-  source: 'code' | 'model'
+  source: 'code' | 'label' | 'model'
   observedAt: string
 }
 

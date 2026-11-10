@@ -7,7 +7,7 @@ import type { Store } from '@/features/supply/types'
 import { analyzeLiveFrame, loadLiveVision, recordLiveCode, requestError, type LiveEvent } from './api'
 
 const SCAN_MS = 440
-const MODEL_MS = 15_000
+const LABEL_MS = 4_000
 const stationKey = 'coyote-vision-station'
 
 function stationId() {
@@ -23,6 +23,9 @@ function stationId() {
 }
 
 type Detection = { name: string; source: LiveEvent['source']; box?: CSSProperties }
+const journalSources: Record<LiveEvent['source'], string> = {
+  code: 'QR-метка', label: 'Надпись на упаковке', model: 'Подсказка модели',
+}
 type CameraSession = { controller: AbortController; stream?: MediaStream; timer?: number }
 type LiveCatalog = Awaited<ReturnType<typeof loadLiveVision>>['products']
 
@@ -33,10 +36,10 @@ function closeCamera(session: CameraSession | null) {
   session.stream?.getTracks().forEach((track) => track.stop())
 }
 
-function cropForModel(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
+function cropLabelFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement) {
   const width = Math.floor(video.videoWidth * 0.7)
   const height = Math.floor(video.videoHeight * 0.7)
-  const scale = Math.min(1, 640 / Math.max(width, height))
+  const scale = Math.min(1, 1024 / Math.max(width, height))
   canvas.width = Math.round(width * scale)
   canvas.height = Math.round(height * scale)
   canvas.getContext('2d')?.drawImage(video, (video.videoWidth - width) / 2,
@@ -49,8 +52,8 @@ function LiveSession({ store }: { store: Store }) {
   const [events, setEvents] = useState<LiveEvent[]>([])
   const [journalError, setJournalError] = useState('')
   const [cameraError, setCameraError] = useState('')
-  const [modelError, setModelError] = useState('')
-  const [models, setModels] = useState(false)
+  const [labelError, setLabelError] = useState('')
+  const [labels, setLabels] = useState(false)
   const [phase, setPhase] = useState<'off' | 'starting' | 'live'>('off')
   const [detection, setDetection] = useState<Detection | null>(null)
   const [notice, setNotice] = useState('')
@@ -59,7 +62,7 @@ function LiveSession({ store }: { store: Store }) {
   const [deviceId, setDeviceId] = useState('')
   const video = useRef<HTMLVideoElement>(null)
   const camera = useRef<CameraSession | null>(null)
-  const modelsEnabled = useRef(false)
+  const labelsEnabled = useRef(false)
 
   function mergeEvents(next: LiveEvent[]) {
     setEvents((previous) => {
@@ -95,7 +98,7 @@ function LiveSession({ store }: { store: Store }) {
     if (video.current) video.current.srcObject = null
     setPhase('off')
     setDetection(null)
-    setModelError('')
+    setLabelError('')
   }
 
   async function start() {
@@ -139,35 +142,35 @@ function LiveSession({ store }: { store: Store }) {
       const scanCanvas = document.createElement('canvas')
       const pixels = scanCanvas.getContext('2d', { willReadFrequently: true })
       if (!pixels) throw new Error('Не удалось начать обработку видео.')
-      const modelCanvas = document.createElement('canvas')
+      const labelCanvas = document.createElement('canvas')
       let candidate = ''
       let matches = 0
       let lastSeen = 0
-      let modelNext = performance.now() + MODEL_MS
-      let modelBusy = false
+      let labelNext = performance.now() + LABEL_MS
+      let labelBusy = false
       let codeBusy = false
       let pending: { code: string; eventId: string; saved: boolean; retryAt: number } | null = null
 
       async function inspectFrame() {
-        modelBusy = true
+        labelBusy = true
         try {
-          const blob = await cropForModel(player, modelCanvas)
-          if (!blob || signal.aborted || !modelsEnabled.current || document.hidden) return
+          const blob = await cropLabelFrame(player, labelCanvas)
+          if (!blob || signal.aborted || !labelsEnabled.current || document.hidden) return
           const result = await analyzeLiveFrame(store.storeId, station, blob, signal)
           if (signal.aborted) return
           if (result.event) {
             mergeEvents([result.event])
-            setNotice(`${result.event.ingredientName} · подсказка записана`)
+            setNotice(`${result.event.ingredientName} · этикетка записана`)
           }
-          if (modelsEnabled.current && !candidate && !document.hidden) {
-            setDetection(result.ingredientName ? { name: result.ingredientName, source: 'model' } : null)
-            setModelError('')
+          if (labelsEnabled.current && !candidate && !document.hidden) {
+            setDetection(result.ingredientName ? { name: result.ingredientName, source: 'label' } : null)
+            setLabelError('')
           }
         } catch (error) {
-          if (!signal.aborted && modelsEnabled.current) setModelError(requestError(error))
+          if (!signal.aborted && labelsEnabled.current) setLabelError(requestError(error))
         } finally {
-          modelBusy = false
-          modelNext = performance.now() + MODEL_MS
+          labelBusy = false
+          labelNext = performance.now() + LABEL_MS
         }
       }
 
@@ -225,7 +228,7 @@ function LiveSession({ store }: { store: Store }) {
         matches = 0
         setDetection((previous) => previous?.source === 'code' ? null : previous)
         if (now - lastSeen >= 2_000 && !codeBusy) pending = null
-        if (modelsEnabled.current && !modelBusy && now >= modelNext) void inspectFrame()
+        if (labelsEnabled.current && !labelBusy && now >= labelNext) void inspectFrame()
       }, SCAN_MS)
     } catch (error) {
       if (!signal.aborted) {
@@ -245,8 +248,9 @@ function LiveSession({ store }: { store: Store }) {
           <>
             <span className="vision-preview-tag vision-live-tag"><i aria-hidden="true" /> В эфире</span>
             {detection?.box && <span className="vision-live-box" style={detection.box} aria-hidden="true" />}
+            {labels && !detection?.box && <span className="vision-label-guide" aria-hidden="true" />}
             <span className="vision-live-reading">
-              {detection ? `${detection.name} · ${detection.source === 'code' ? 'метка' : 'подсказка'}` : 'Камера ждёт продукт'}
+              {detection ? `${detection.name} · ${journalSources[detection.source]}` : labels ? 'Покажите этикетку в рамке' : 'Камера ждёт продукт'}
             </span>
           </>
         ) : (
@@ -275,24 +279,24 @@ function LiveSession({ store }: { store: Store }) {
         </label>
       )}
       <label className="flex items-start gap-3 rounded-xl border border-border p-3 text-sm">
-        <input className="mt-1 size-4 shrink-0 accent-primary" type="checkbox" checked={models} onChange={(event) => {
-          modelsEnabled.current = event.target.checked
-          setModels(event.target.checked)
-          if (!event.target.checked) { setModelError(''); setDetection((previous) => previous?.source === 'model' ? null : previous) }
+        <input className="mt-1 size-4 shrink-0 accent-primary" type="checkbox" checked={labels} onChange={(event) => {
+          labelsEnabled.current = event.target.checked
+          setLabels(event.target.checked)
+          if (!event.target.checked) { setLabelError(''); setDetection((previous) => previous?.source === 'label' ? null : previous) }
         }} />
-        <span><strong>Подсказки модели по внешнему виду</strong><br />
-          <span className="text-muted-foreground">Без метки в модель отправляется центральная часть кадра примерно раз в 15 секунд. Кадры не сохраняются.</span>
+        <span><strong>Распознавание этикетки без QR</strong><br />
+          <span className="text-muted-foreground">Держите название продукта в рамке. Сервер читает надпись и сверяет два кадра. Кадры не сохраняются.</span>
         </span>
       </label>
       {cameraError && <p role="alert" className="text-sm text-primary">{cameraError}</p>}
-      {modelError && <p role="status" className="text-sm text-muted-foreground">{modelError}</p>}
+      {labelError && <p role="status" className="text-sm text-muted-foreground">{labelError}</p>}
       <p role="status" className="sr-only">{notice}</p>
       <section className="vision-journal" aria-labelledby="vision-journal-title">
         <h3 id="vision-journal-title" className="font-extrabold">Журнал наблюдений</h3>
         <p className="mt-1 text-sm text-muted-foreground">Продукт, источник и время. Записи не меняют остатки.</p>
         {journalError && <p role="alert" className="mt-3 text-sm text-primary">{journalError}</p>}
         {!journalError && !catalog && <p className="mt-3 text-sm text-muted-foreground">Загружаем журнал…</p>}
-        {catalog && events.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Пока пусто. Поместите продукт с меткой перед камерой.</p>}
+        {catalog && events.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Пока пусто. Покажите камере этикетку или QR-метку.</p>}
         <ul className="mt-3 divide-y divide-border">
           {events.map((event) => {
             const Icon = event.source === 'code' ? QrCode : Sparkles
@@ -301,7 +305,7 @@ function LiveSession({ store }: { store: Store }) {
                 <Icon size={18} aria-hidden="true" />
                 <div className="min-w-0">
                   <strong>{event.ingredientName}</strong>
-                  <span>{event.source === 'code' ? 'Метка упаковки' : 'Подсказка модели'} · камера {event.stationId.slice(0, 4).toUpperCase()}</span>
+                  <span>{journalSources[event.source]} · камера {event.stationId.slice(0, 4).toUpperCase()}</span>
                 </div>
                 <time dateTime={event.observedAt}>{formatTimestamp(event.observedAt, store.timeZone)}</time>
               </li>

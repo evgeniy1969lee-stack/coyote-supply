@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from backend.app import vision
+from backend.app import vision_labels
 from backend.app.demo_data import load_demo
 from backend.app.main import create_app
 
@@ -46,9 +46,10 @@ def jpeg(color):
     return target.getvalue()
 
 
-def test_live_model_only_journals_two_distinct_matching_frames(tmp_path, monkeypatch):
-    monkeypatch.setenv("COYOTE_VISION_URL", "http://127.0.0.1:8082")
-    monkeypatch.setattr(vision, "request_caption", lambda *args: "A carton of milk on a counter.")
+def test_live_only_journals_two_distinct_matching_labels(tmp_path, monkeypatch):
+    labels = iter(("WHOLE MILK", "WHOLE MILK", "OAT DRINK", "WHOLE MILK",
+                   "WHOLE MILK", "WHOLE MILK", "COFFEE CREAMER CONTAINS MILK"))
+    monkeypatch.setattr(vision_labels, "read_label", lambda frame: next(labels))
     with TestClient(create_app(tmp_path / "live.sqlite3")) as client:
         station = uuid4()
         opening = client.get(SHYMKENT + "/shift").json()
@@ -61,9 +62,14 @@ def test_live_model_only_journals_two_distinct_matching_frames(tmp_path, monkeyp
 
         assert analyze("white")["event"] is None
         assert analyze("white")["event"] is None
-        event = analyze("beige")["event"]
-        assert event["source"] == "model" and event["ingredientId"] == "milk"
+        oat = analyze("brown")
+        assert oat["ingredientId"] == "oat-milk" and oat["event"] is None
+        assert analyze("beige")["event"] is None
+        event = analyze("ivory")["event"]
+        assert event["source"] == "label" and event["ingredientId"] == "milk"
         assert analyze("tan")["event"] is None
+        unknown = analyze("orange")
+        assert unknown["ingredientId"] is None and unknown["event"] is None
         assert client.get(SHYMKENT + "/vision/live").json()["events"] == [event]
         assert client.get(SHYMKENT + "/shift").json() == opening
 
