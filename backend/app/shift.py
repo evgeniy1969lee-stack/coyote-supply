@@ -1,4 +1,4 @@
-"""Operational shift state over the supply forecast and a persisted loss journal."""
+"""Operational shift state over the supply forecast and a persisted stock journal."""
 
 import sqlite3
 from dataclasses import dataclass
@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 
 from pydantic import AwareDatetime, Field, StringConstraints
 
-from .data import Dataset, StoreData
+from .data import Dataset, Recipe, StoreData
 from .replenishment import build_forecast
 from .schemas import (
     ContractModel, Draft, Expiry, Forecast, Id, IngredientForecast, PositiveQty, Qty,
@@ -15,6 +15,7 @@ from .schemas import (
 )
 
 EventId = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9-]{0,63}$")]
+VISION_INGREDIENTS = frozenset({"milk", "oat-milk", "cream"})
 
 
 class LossRequest(ContractModel):
@@ -24,13 +25,17 @@ class LossRequest(ContractModel):
     quantity: PositiveQty
 
 
+class ConsumptionRequest(LossRequest):
+    recipeSku: Id
+
+
 class LossEffect(ContractModel):
     onHandQty: Qty
     shortageQty: Qty | None
     recommendedQty: Qty | None
 
 
-class LossEvent(ContractModel):
+class StockEvent(ContractModel):
     eventId: EventId
     ingredientId: Id
     name: str
@@ -39,6 +44,10 @@ class LossEvent(ContractModel):
     recordedAt: AwareDatetime
     before: LossEffect
     after: LossEffect
+    kind: Literal["loss", "consumption"] = "loss"
+    recipeSku: Id | None = None
+    todayDemandBefore: Qty | None = None
+    todayDemandAfter: Qty | None = None
 
 
 class Guardian(ContractModel):
@@ -61,7 +70,8 @@ class ShiftOverview(ContractModel):
     draft: Draft | None
     guardian: Guardian
     actions: Annotated[list[ShiftAction], Field(max_length=4)]
-    recentLosses: list[LossEvent]
+    recentLosses: list[StockEvent]
+    recentConsumptions: list[StockEvent]
 
 
 class LossRejected(ValueError):
@@ -79,7 +89,16 @@ class ShiftChanged(ValueError):
 class ShiftSnapshot:
     store: StoreData
     forecast: Forecast
-    losses: list[LossEvent]
+    events: list[StockEvent]
+    consumed_today: dict[str, int]
+
+
+def vision_recipes(dataset: Dataset, day: date) -> list[Recipe]:
+    return [
+        recipe for recipe in dataset.recipes
+        if recipe.valid_from <= day and (recipe.valid_until is None or day < recipe.valid_until)
+        and VISION_INGREDIENTS.intersection(recipe.usage)
+    ]
 
 
 def describe_quantity(quantity: int, unit: Unit) -> str:
@@ -92,7 +111,7 @@ def describe_quantity(quantity: int, unit: Unit) -> str:
     return f"{number} {('л' if unit == 'ml' else 'кг')}"
 
 
-def apply_loss(store: StoreData, ingredient_id: str, quantity: int) -> StoreData:
+def deduct_stock(store: StoreData, ingredient_id: str, quantity: int) -> StoreData:
     stock = store.inventory.get(ingredient_id)
     if stock is None:
         raise LossRejected("ingredientId", "unknown_ingredient")
@@ -158,35 +177,56 @@ class ShiftService:
             "SELECT payload FROM shift_losses WHERE baseline_id = ? ORDER BY sequence",
             (baseline.forecastId,),
         )
-        losses = [LossEvent.model_validate_json(payload) for (payload,) in rows]
-        for loss in losses:
-            store = apply_loss(store, loss.ingredientId, loss.quantity)
-        forecast = build_forecast(self.dataset, store) if losses else baseline
-        return ShiftSnapshot(store, forecast, losses)
+        events = [StockEvent.model_validate_json(payload) for (payload,) in rows]
+        consumed_today: dict[str, int] = {}
+        for event in events:
+            store = deduct_stock(store, event.ingredientId, event.quantity)
+            if event.kind == "consumption":
+                consumed_today[event.ingredientId] = consumed_today.get(event.ingredientId, 0) + event.quantity
+        forecast = build_forecast(self.dataset, store, consumed_today=consumed_today) if events else baseline
+        return ShiftSnapshot(store, forecast, events, consumed_today)
 
     def record(self, connection: sqlite3.Connection, store_id: str, request: LossRequest) -> ShiftSnapshot:
         snapshot = self.current(connection, store_id)
-        duplicate = next((event for event in snapshot.losses if event.eventId == request.eventId), None)
+        recipe_sku = request.recipeSku if isinstance(request, ConsumptionRequest) else None
+        duplicate = next((event for event in snapshot.events if event.eventId == request.eventId), None)
         if duplicate is not None:
-            if (duplicate.ingredientId, duplicate.quantity) != (request.ingredientId, request.quantity):
+            if (duplicate.ingredientId, duplicate.quantity, duplicate.recipeSku) != (
+                request.ingredientId, request.quantity, recipe_sku,
+            ):
                 raise LossRejected("eventId", "event_id_reused")
             return snapshot
         if request.forecastId != snapshot.forecast.forecastId:
             raise ShiftChanged
 
-        store = apply_loss(snapshot.store, request.ingredientId, request.quantity)
-        forecast = build_forecast(self.dataset, store)
+        consumed_today = snapshot.consumed_today
+        if recipe_sku is not None:
+            recipe = next((row for row in vision_recipes(self.dataset, snapshot.store.as_of_date) if row.sku == recipe_sku), None)
+            if recipe is None or request.ingredientId not in VISION_INGREDIENTS.intersection(recipe.usage):
+                raise LossRejected("recipeSku", "ingredient_not_in_recipe")
+            if self.dataset.catalog[request.ingredientId].unit != "ml":
+                raise LossRejected("ingredientId", "unsupported_vision_unit")
+            consumed_today = {
+                **consumed_today,
+                request.ingredientId: consumed_today.get(request.ingredientId, 0) + request.quantity,
+            }
+
+        store = deduct_stock(snapshot.store, request.ingredientId, request.quantity)
+        forecast = build_forecast(self.dataset, store, consumed_today=consumed_today)
         before = next(item for item in snapshot.forecast.ingredients if item.ingredientId == request.ingredientId)
         after = next(item for item in forecast.ingredients if item.ingredientId == request.ingredientId)
-        loss = LossEvent(
+        event = StockEvent(
             eventId=request.eventId, ingredientId=request.ingredientId, name=after.name, unit=after.unit,
             quantity=request.quantity, recordedAt=datetime.now(UTC), before=_effect(before), after=_effect(after),
+            kind="consumption" if recipe_sku is not None else "loss", recipeSku=recipe_sku,
+            todayDemandBefore=before.daily[0].demandQty if recipe_sku is not None and before.daily else None,
+            todayDemandAfter=after.daily[0].demandQty if recipe_sku is not None and after.daily else None,
         )
         connection.execute(
             "INSERT INTO shift_losses (baseline_id, event_id, payload) VALUES (?, ?, ?)",
-            (self.baselines[store_id].forecastId, request.eventId, loss.model_dump_json()),
+            (self.baselines[store_id].forecastId, request.eventId, event.model_dump_json()),
         )
-        return ShiftSnapshot(store, forecast, [*snapshot.losses, loss])
+        return ShiftSnapshot(store, forecast, [*snapshot.events, event], consumed_today)
 
 
 def summarize_shift(snapshot: ShiftSnapshot, draft: Draft | None) -> ShiftOverview:
@@ -249,5 +289,7 @@ def summarize_shift(snapshot: ShiftSnapshot, draft: Draft | None) -> ShiftOvervi
         ))
     return ShiftOverview(
         storeId=forecast.storeId, shiftDate=snapshot.store.as_of_date, forecast=forecast, draft=draft,
-        guardian=guardian, actions=actions, recentLosses=list(reversed(snapshot.losses[-5:])),
+        guardian=guardian, actions=actions,
+        recentLosses=[event for event in reversed(snapshot.events) if event.kind == "loss"][:5],
+        recentConsumptions=[event for event in reversed(snapshot.events) if event.kind == "consumption"][:5],
     )

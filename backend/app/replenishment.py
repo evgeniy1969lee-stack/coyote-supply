@@ -37,6 +37,7 @@ def next_schedule(store: StoreData) -> Schedule | None:
 def recommend_ingredient(
     store: StoreData, ingredient_id: str, item: Ingredient,
     history: ConsumptionHistory, deliveries: list[Delivery], schedule: Schedule | None,
+    consumed_today: int = 0,
 ) -> IngredientForecast:
     stock = store.inventory[ingredient_id]
     common = dict(
@@ -68,6 +69,9 @@ def recommend_ingredient(
         )
 
     assert schedule is not None
+    if consumed_today:
+        day = store.as_of_date
+        demand[day] = max(0, demand[day] - consumed_today)
     daily, expiry = simulate(stock, demand, deliveries, item.track_expiry)
     before = [row for row in daily if row.date < schedule.arrivalDate]
     shortages = [row for row in before if row.unmetQty]
@@ -97,7 +101,9 @@ def recommend_ingredient(
     )
 
 
-def build_forecast(dataset: Dataset, store: StoreData) -> Forecast:
+def build_forecast(
+    dataset: Dataset, store: StoreData, *, consumed_today: dict[str, int] | None = None,
+) -> Forecast:
     # Hash the snapshot as well as the policy versions. Changes in another store's
     # sales or stock do not invalidate this store's saved draft.
     source = {
@@ -106,6 +112,8 @@ def build_forecast(dataset: Dataset, store: StoreData) -> Forecast:
         "recipes": [recipe.model_dump(mode="json") for recipe in dataset.recipes],
         "store": store.model_dump(mode="json"),
     }
+    if consumed_today:
+        source["consumed_today"] = consumed_today
     digest = hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
     schedule = next_schedule(store)
     history = aggregate_consumption(store, dataset.recipes)
@@ -116,7 +124,10 @@ def build_forecast(dataset: Dataset, store: StoreData) -> Forecast:
         storeId=store.info.storeId, forecastId=f"{store.info.storeId}-{store.as_of_date}-{digest}",
         asOf=store.info.asOf, schedule=schedule, dataMode=dataset.data_mode,
         ingredients=[
-            recommend_ingredient(store, key, dataset.catalog[key], history[key], deliveries[key], schedule)
+            recommend_ingredient(
+                store, key, dataset.catalog[key], history[key], deliveries[key], schedule,
+                consumed_today.get(key, 0) if consumed_today else 0,
+            )
             for key in store.inventory
         ],
     )

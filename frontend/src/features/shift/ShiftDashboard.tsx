@@ -5,8 +5,9 @@ import { formatDate, formatQuantity } from '@/features/supply/format'
 import type { Risk, Unit } from '@/features/supply/types'
 import { prompts } from './prompts'
 import { LossSheet } from './LossSheet'
+import { VisionSheet } from './VisionSheet'
 import { buttonPointerMotion, heroPointerMotion } from './pointerMotion'
-import type { LossEvent, ShiftOverview } from './api'
+import type { StockEvent, ShiftOverview } from './api'
 
 const guardianLabels = { alert: 'Требует внимания', watch: 'Под наблюдением', calm: 'По плану' }
 const priorities = { urgent: 'Приоритет', planned: 'К проверке', done: 'Готово' }
@@ -15,7 +16,9 @@ function quantity(value: number | null, unit: Unit) {
   return value === null ? 'Нет данных' : formatQuantity(value, unit)
 }
 
-function LossImpact({ event, onAsk }: { event: LossEvent; onAsk: (question: string) => void }) {
+function StockImpact({ event, onAsk }: { event: StockEvent; onAsk: (question: string) => void }) {
+  const consumption = event.kind === 'consumption'
+  const recordedQuantity = consumption ? `${event.quantity} мл` : formatQuantity(event.quantity, event.unit)
   const metrics = [
     { label: 'Остаток', before: event.before.onHandQty, after: event.after.onHandQty },
     { label: 'Дефицит до поставки', before: event.before.shortageQty, after: event.after.shortageQty },
@@ -23,16 +26,24 @@ function LossImpact({ event, onAsk }: { event: LossEvent; onAsk: (question: stri
   ]
   return (
     <section className="os-card loss-impact" aria-labelledby="loss-impact-title">
-      <div className="loss-impact-head">
+      <div className="loss-impact-head" role="status">
         <div className="os-tile os-tile-green"><Check size={22} aria-hidden="true" /></div>
         <div>
-          <h2 id="loss-impact-title">Потеря записана</h2>
-          <p>{event.name} · {formatQuantity(event.quantity, event.unit)}. Прогноз пересчитан на сервере.</p>
+          <h2 id="loss-impact-title">{consumption ? 'Расход подтверждён' : 'Потеря записана'}</h2>
+          <p>{event.name} · {recordedQuantity}. Прогноз пересчитан на сервере.</p>
         </div>
-        <Button type="button" variant="outline" className="h-11" onClick={() => onAsk('Что изменилось после списания?')}>
-          Объяснить пересчёт <ArrowRight aria-hidden="true" />
-        </Button>
+        {!consumption && (
+          <Button type="button" variant="outline" className="h-11" onClick={() => onAsk('Что изменилось после списания?')}>
+            Объяснить пересчёт <ArrowRight aria-hidden="true" />
+          </Button>
+        )}
       </div>
+      {event.todayDemandBefore != null && event.todayDemandAfter != null && (
+        <p className="text-sm text-muted-foreground">
+          Осталось расхода на сегодня {quantity(event.todayDemandBefore, event.unit)} → {quantity(event.todayDemandAfter, event.unit)}.
+          {' '}Подтверждённая порция уже учтена в прогнозе.
+        </p>
+      )}
       <dl className="impact-metrics">
         {metrics.map((metric) => (
           <div key={metric.label}>
@@ -51,22 +62,23 @@ function LossImpact({ event, onAsk }: { event: LossEvent; onAsk: (question: stri
   )
 }
 
-export function ShiftDashboard({ shift, onLoss, onRefresh, onSupply, onAsk, draftAction }: {
+export function ShiftDashboard({ shift, onStockChange, onRefresh, onSupply, onAsk, draftAction }: {
   shift: ShiftOverview
-  onLoss: (data: ShiftOverview) => void
+  onStockChange: (data: ShiftOverview) => void
   onRefresh: () => Promise<void>
   onSupply: () => void
   onAsk: (question: string) => void
   draftAction: ReactNode
 }) {
-  const { guardian, forecast, recentLosses } = shift
+  const { guardian, forecast, recentLosses, recentConsumptions = [] } = shift
   const shortages = forecast.ingredients.flatMap((item) =>
     item.risks.filter((risk): risk is Extract<Risk, { type: 'stockout' }> => risk.type === 'stockout')
       .map((risk) => ({ item, risk })),
   ).sort((a, b) => a.risk.date.localeCompare(b.risk.date) || a.item.ingredientId.localeCompare(b.item.ingredientId))
   const primary = shortages[0]
   const product = primary?.item ?? forecast.ingredients.find((item) => (item.recommendedQty ?? 0) > 0)
-  const recent = recentLosses[0]
+  const recent = [recentLosses[0], recentConsumptions[0]].filter(Boolean)
+    .sort((a, b) => Date.parse(b.recordedAt) - Date.parse(a.recordedAt))[0]
   const metrics = [
     {
       title: 'Текущий запас', icon: Droplets, tone: 'rose',
@@ -97,7 +109,7 @@ export function ShiftDashboard({ shift, onLoss, onRefresh, onSupply, onAsk, draf
           <h2 id="guardian-title">{guardian.title}</h2>
           <p aria-live="polite">{guardian.message}</p>
           <div className="guardian-actions">
-            <LossSheet shift={shift} onChange={onLoss} onRefresh={onRefresh}>
+            <LossSheet shift={shift} onChange={onStockChange} onRefresh={onRefresh}>
               <Button {...buttonPointerMotion} className="guardian-primary h-11 px-3" disabled={!hasStock}>
                 <span className="pointer-button-label"><Droplets aria-hidden="true" /> Записать потерю</span>
               </Button>
@@ -111,10 +123,8 @@ export function ShiftDashboard({ shift, onLoss, onRefresh, onSupply, onAsk, draf
         </div>
       </section>
 
-      <div className="sr-only" role="status">
-        {recent && `Последняя потеря: ${recent.name}, ${formatQuantity(recent.quantity, recent.unit)}. Прогноз пересчитан.`}
-      </div>
-      {recent && <LossImpact event={recent} onAsk={onAsk} />}
+      <VisionSheet storeId={shift.storeId} onChange={onStockChange} onRefresh={onRefresh} />
+      {recent && <StockImpact event={recent} onAsk={onAsk} />}
 
       <section className="shift-metrics" aria-label="Показатели смены">
         {metrics.map(({ title, icon: Icon, tone, value, note }) => (

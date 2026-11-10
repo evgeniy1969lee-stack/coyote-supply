@@ -658,7 +658,12 @@
               "enum": [
                 "store_not_found",
                 "stale_forecast",
-                "invalid_draft"
+                "invalid_draft",
+                "stale_shift",
+                "invalid_shift",
+                "invalid_frame",
+                "frame_too_large",
+                "vision_unavailable"
               ]
             },
             "message": {

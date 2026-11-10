@@ -27,7 +27,7 @@ export type LossRequest = {
   quantity: number
 }
 
-export type LossEvent = {
+export type StockEvent = {
   eventId: string
   ingredientId: string
   name: string
@@ -36,6 +36,10 @@ export type LossEvent = {
   recordedAt: string
   before: LossEffect
   after: LossEffect
+  kind: 'loss' | 'consumption'
+  recipeSku: string | null
+  todayDemandBefore: number | null
+  todayDemandAfter: number | null
 }
 
 export type ShiftOverview = {
@@ -50,7 +54,27 @@ export type ShiftOverview = {
     title: string
     detail: string
   }[]
-  recentLosses: LossEvent[]
+  recentLosses: StockEvent[]
+  recentConsumptions: StockEvent[]
+}
+
+export type ConsumptionRequest = LossRequest & { recipeSku: string }
+
+export type RecipePortion = {
+  recipeSku: string
+  recipeName: string
+  ingredientId: string
+  ingredientName: string
+  recipeQty: number
+  availableQty: number | null
+}
+
+export type VisionProposal = {
+  model: string
+  observation: 'possible_pour' | 'ingredient_visible' | 'unclear'
+  ingredientId: string | null
+  forecastId: string
+  options: RecipePortion[]
 }
 
 export type CopilotAnswer = {
@@ -98,6 +122,16 @@ export function loadShift(storeId: string, signal?: AbortSignal) {
 
 export function recordLoss(storeId: string, request: LossRequest) {
   return jsonRequest<ShiftOverview>(`${storePath(storeId)}/shift/losses`, withJson('POST', request))
+}
+
+export function analyzeVision(storeId: string, frame: Blob, signal: AbortSignal) {
+  return jsonRequest<VisionProposal>(`${storePath(storeId)}/shift/vision`, {
+    method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: frame, signal,
+  })
+}
+
+export function recordConsumption(storeId: string, request: ConsumptionRequest) {
+  return jsonRequest<ShiftOverview>(`${storePath(storeId)}/shift/consumptions`, withJson('POST', request))
 }
 
 export function askCopilot(storeId: string, question: string) {

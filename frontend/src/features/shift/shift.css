@@ -179,6 +179,65 @@
 .loss-impact-head { flex-wrap: wrap; }
 .loss-impact-head p { margin-top: 3px; color: var(--muted-foreground); font-size: .82rem; }
 .loss-impact-head button { margin-inline-start: auto; }
+
+.vision-launch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: clamp(14px, 2.4vw, 22px);
+}
+.vision-launch-copy { display: flex; min-width: 0; align-items: center; gap: 11px; }
+.vision-launch h2, .vision-observation h3 { font-weight: 800; }
+.vision-launch p, .vision-observation p, .vision-field small { color: var(--muted-foreground); font-size: .82rem; }
+.vision-session, .vision-review { display: grid; align-content: start; gap: 14px; }
+.vision-session { padding: clamp(14px, 4vw, 24px); }
+.vision-preview {
+  position: relative;
+  display: grid;
+  aspect-ratio: 3 / 2;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 13px;
+  background: radial-gradient(ellipse at 50% 30%, #654255, #2f222b 82%);
+  color: #fff6ec;
+}
+.vision-preview img, .vision-preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.vision-placeholder { display: grid; justify-items: center; gap: 9px; padding: 14px; text-align: center; }
+.vision-placeholder span { font-size: .85rem; color: #f0dce5; }
+.vision-preview-tag {
+  position: absolute;
+  inset-block-start: 11px;
+  inset-inline-start: 11px;
+  border-radius: 7px;
+  background: #2f222be8;
+  padding: 5px 8px;
+  font-size: .74rem;
+  font-weight: 700;
+}
+.vision-observation {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-radius: 10px;
+  background: var(--muted);
+  padding: 12px;
+}
+.vision-observation svg { flex: none; color: var(--primary); }
+.vision-field { display: grid; gap: 6px; min-width: 0; font-weight: 700; }
+.vision-field select, .vision-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--card);
+  padding-inline: 10px;
+  font-weight: 500;
+}
+.vision-field input[aria-invalid="true"] { border-color: var(--destructive); }
+.vision-field small { font-weight: 500; }
 .impact-metrics { gap: 8px; }
 .impact-metrics > div { border-radius: 10px; background: var(--muted); padding: 10px; }
 .impact-metrics dd { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin-top: 5px; font-size: 1rem; font-weight: 800; }

@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -17,7 +18,10 @@ from .drafts import DraftStore, price_draft
 from .schemas import (
     DraftRequest, DraftResponse, ErrorBody, ErrorDetail, ErrorResponse, Forecast, Health, Stores,
 )
-from .shift import LossRejected, LossRequest, ShiftChanged, ShiftOverview, ShiftService, summarize_shift
+from .shift import ConsumptionRequest, LossRejected, LossRequest, ShiftChanged, ShiftOverview, ShiftService, summarize_shift
+from .vision import (
+    MAX_FRAME_BYTES, FrameHint, InvalidFrame, VisionProposal, VisionUnavailable, analyze_frame, make_proposal,
+)
 
 BACKEND = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = BACKEND / "data" / "drafts.sqlite3"
@@ -31,6 +35,9 @@ ERRORS = {
     "invalid_draft": (422, "Проверьте поля черновика."),
     "stale_shift": (409, "Смена обновилась. Сверьте остаток и повторите операцию."),
     "invalid_shift": (422, "Проверьте данные операции."),
+    "invalid_frame": (422, "Не удалось прочитать кадр. Сделайте снимок заново или выберите другое фото."),
+    "frame_too_large": (413, "Кадр слишком большой. Выберите другое фото."),
+    "vision_unavailable": (503, "Vision пока занят или недоступен. Повторите анализ кадра."),
 }
 
 
@@ -133,11 +140,7 @@ def create_app(
         with database.transaction() as connection:
             return summarize_shift(shift.current(connection, id), database.get(connection, id))
 
-    @app.post(
-        "/api/stores/{id}/shift/losses", response_model=ShiftOverview,
-        responses={status: {"model": ErrorResponse} for status in (404, 409, 422)},
-    )
-    def post_loss(id: str, request: LossRequest) -> ShiftOverview | JSONResponse:
+    def post_stock_event(id: str, request: LossRequest) -> ShiftOverview | JSONResponse:
         if id not in shift.stores:
             return error("store_not_found")
         try:
@@ -148,6 +151,49 @@ def create_app(
             return error("stale_shift")
         except LossRejected as exc:
             return error("invalid_shift", [ErrorDetail(path=exc.path, reason=exc.reason)])
+
+    @app.post(
+        "/api/stores/{id}/shift/losses", response_model=ShiftOverview,
+        responses={status: {"model": ErrorResponse} for status in (404, 409, 422)},
+    )
+    def post_loss(id: str, request: LossRequest) -> ShiftOverview | JSONResponse:
+        return post_stock_event(id, request)
+
+    @app.post(
+        "/api/stores/{id}/shift/consumptions", response_model=ShiftOverview,
+        responses={status: {"model": ErrorResponse} for status in (404, 409, 422)},
+    )
+    def post_consumption(id: str, request: ConsumptionRequest) -> ShiftOverview | JSONResponse:
+        return post_stock_event(id, request)
+
+    def vision_proposal(id: str, hint: FrameHint) -> VisionProposal:
+        with database.transaction() as connection:
+            return make_proposal(shift.dataset, shift.current(connection, id), hint)
+
+    @app.post(
+        "/api/stores/{id}/shift/vision", response_model=VisionProposal,
+        responses={status: {"model": ErrorResponse} for status in (404, 413, 422, 503)},
+        openapi_extra={"requestBody": {"required": True, "content": {
+            "image/jpeg": {"schema": {"type": "string", "format": "binary"}},
+        }}},
+    )
+    async def post_vision(id: str, request: Request) -> VisionProposal | JSONResponse:
+        if id not in shift.stores:
+            return error("store_not_found")
+        if request.headers.get("content-type", "").split(";")[0].strip().lower() != "image/jpeg":
+            return error("invalid_frame")
+        frame = bytearray()
+        async for chunk in request.stream():
+            if len(frame) + len(chunk) > MAX_FRAME_BYTES:
+                return error("frame_too_large")
+            frame.extend(chunk)
+        try:
+            hint = await run_in_threadpool(analyze_frame, bytes(frame))
+        except InvalidFrame:
+            return error("invalid_frame")
+        except VisionUnavailable:
+            return error("vision_unavailable")
+        return await run_in_threadpool(vision_proposal, id, hint)
 
     @app.post(
         "/api/stores/{id}/shift/copilot", response_model=CopilotAnswer,

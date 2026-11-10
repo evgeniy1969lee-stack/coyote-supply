@@ -69,7 +69,7 @@ function StoreWorkspace({ store, view, navigate }: {
     void reload().catch((failure) => setError(requestError(failure)))
   }
 
-  function acceptLoss(next: ShiftOverview) {
+  function acceptStockChange(next: ShiftOverview) {
     latest.current += 1
     setShift(next)
     setError('')
@@ -104,7 +104,7 @@ function StoreWorkspace({ store, view, navigate }: {
       {error && <RetryPanel message={error} onRetry={retry} />}
       {view === 'shift' && (
         <ShiftDashboard
-          shift={shift} onLoss={acceptLoss} onRefresh={reload}
+          shift={shift} onStockChange={acceptStockChange} onRefresh={reload}
           onSupply={() => navigate('supply')} onAsk={openCopilot} draftAction={draftAction}
         />
       )}
